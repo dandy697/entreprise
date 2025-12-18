@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company ClassifAI | Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <div class="background-orbs">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="dashboard-container">
+
+        <header class="main-header">
+            <div class="logo">
+                <i class="fa-solid fa-rocket launch-icon"></i>
+                <h2>Company <span class="highlight">ClassifAI</span></h2>
+            </div>
+        </header>
+
+        <!-- SINGLE SEARCH HERO -->
+        <div class="glass-card search-hero">
+            <h3><i class="fa-solid fa-magnifying-glass"></i> Recherche Rapide</h3>
+            <div class="search-bar-wrapper">
+                <input type="text" id="singleInput"
+                    placeholder="Entrez un nom d'entreprise ou un email (ex: LVMH, contact@keyrus.com)..."
+                    autocomplete="off">
+                <button id="singleSearchBtn" onclick="performSingleSearch()">
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- INPUT GRID -->
+        <div class="input-grid">
+            <!-- Card 1: Excel Upload -->
+            <div class="glass-card upload-card">
+                <h3><i class="fa-solid fa-file-excel"></i> Import Excel</h3>
+                <div class="drag-drop-zone" id="dropZone">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <p>Cliquez ou glissez-déposez</p>
+                    <small>Fichier Excel (.xlsx, .xls) ou CSV. 1ère colonne lue.</small>
+                    <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" hidden>
+                </div>
+            </div>
+
+            <!-- Card 2: Manual Paste -->
+            <div class="glass-card paste-card">
+                <h3><i class="fa-solid fa-paste"></i> Copier-Coller</h3>
+                <textarea id="pasteInput" placeholder="Collez vos emails ou noms d'entreprises (un par ligne)
+Ex:
+baptiste.benet@keyrus.com
+Keyrus
+contact@societe.fr"></textarea>
+                <div class="card-actions">
+                    <button class="action-btn" id="proccessPasteBtn" onclick="processPaste()">
+                        Enrichir les données
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESULTS SECTION -->
+        <div class="results-section glass-card">
+            <div class="results-header">
+                <h3>Résultats (<span id="countTotal">0</span> entreprise<span id="pluralTotal"></span>)</h3>
+
+                <div class="header-stats"
+                    style="display: flex; gap: 15px; align-items: center; margin-left: auto; margin-right: 20px;">
+                    <div class="stat-badge success">
+                        <i class="fa-solid fa-check"></i> <span id="statFound">0</span>
+                    </div>
+                    <div class="stat-badge warning">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <span id="statNotFound">0</span>
+                    </div>
+                    <div class="stat-badge error">
+                        <i class="fa-solid fa-circle-xmark"></i> <span id="statError">0</span>
+                    </div>
+                </div>
+
+                <button class="action-btn success" onclick="downloadExcel()">
+                    <i class="fa-solid fa-file-export"></i> Excel
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table id="mainTable">
+                    <thead>
+                        <tr>
+                            <th>Statut</th>
+                            <th>Entrée</th>
+                            <th>Nom Entreprise</th>
+                            <th>Industrie</th>
+                            <th>Adresse</th>
+                            <th>Région</th>
+                            <th>Effectif</th>
+                            <th>Lien Annuaire</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="empty-state-message">
+                    Aucune donnée. Importez un fichier ou collez une liste pour commencer.
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
