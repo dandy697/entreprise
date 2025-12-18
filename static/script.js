@@ -149,7 +149,6 @@ function renderTable(data, prepend = false) {
 
         const sector = row["Secteur"] === "Unknown" ? "Non Trouvé" : row["Secteur"];
         const region = row["Région"] || "Non renseigné";
-        const headcount = row["Effectif"] || "Non renseigné";
         const link = row["Lien"] && row["Lien"] !== "#" ? `<a href="${row["Lien"]}" target="_blank" class="link-btn">Voir <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : "-";
 
         tr.innerHTML = `
@@ -159,7 +158,6 @@ function renderTable(data, prepend = false) {
             <td><span class="industry-badge">${sector}</span></td>
             <td>${row["Adresse"]}</td>
             <td>${region}</td>
-            <td>${headcount}</td>
             <td>${link}</td>
         `;
         tbody.appendChild(tr);

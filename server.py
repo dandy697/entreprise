@@ -340,7 +340,6 @@ def categorize_company_logic(raw_input):
         "Nom Officiel": official_name,
         "Adresse": address,
         "Région": region,
-        "Effectif": headcount,
         "Lien": link_url
     }
 
@@ -355,15 +354,24 @@ def categorize_company_logic(raw_input):
         if label_scores[best_label_sector] > 0:
              return {**result_base, "Secteur": best_label_sector, "Détail": f"NAF: {naf_code} (Label)", "Source": "Officiel (Label)", "Score": f"{label_scores[best_label_sector]}"}
 
+    # --- FALLBACK: WEB ANALYSIS (International / No SIRET) ---
     sector_web, source_web, score_web = analyze_web_content(company_name)
+    
+    # If we are here, it means we didn't find a NAF code. 
+    # Likely international or just name match without NAF.
+    # Update visuals if they were "Non renseigné"
+    if address == "Non renseigné": address = "International / Web"
+    if region == "Non renseigné": region = "Monde"
     
     return {
         **result_base,
         "Nom Officiel": official_name if official_name != company_name else company_name,
         "Secteur": sector_web if sector_web else "Non Trouvé",
         "Détail": f"Web Keywords ({score_web})",
-        "Source": source_web,
-        "Score": f"{score_web}"
+        "Source": source_web + " (Hors France)",
+        "Score": f"{score_web}",
+        "Adresse": address,
+        "Région": region
     }
 
 # --- Routes ---
