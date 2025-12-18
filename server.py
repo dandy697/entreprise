@@ -76,7 +76,8 @@ SECTOR_CONFIG = {
     "Energies / Utilities": {
         "naf_prefixes": ["35", "36", "37", "38", "39"],
         "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol"]
-    }
+    },
+    "Healthcare / Medical Services": {
         "naf_prefixes": ["86", "87", "88", "21"],
         "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor"]
     },
