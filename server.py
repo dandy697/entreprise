@@ -43,95 +43,87 @@ SECTOR_CONFIG = {
     },
     "Banking": {
         "naf_prefixes": ["641"],
-        "keywords": ["banque", "crédit", "bancaire", "épargne", "financement", "prêt", "compte", "livret", "cb", "fonds", "bank", "banking", "loan", "credit", "finance", "wealth"]
+        "keywords": ["banque", "crédit", "bancaire", "compte", "livret", "cb", "bank", "banking", "loan", "credit", "bnp", "société générale", "crédit agricole", "bpce"]
     },
     "Chemicals": {
         "naf_prefixes": ["20"],
-        "keywords": ["chimie", "laboratoire", "molécules", "réactif", "polymère", "plastique", "chimique", "petrochemical", "chemicals", "chemistry", "lab", "laboratory"]
+        "keywords": ["chimie", "laboratoire", "molécules", "réactif", "polymère", "plastique", "chimique", "petrochemical", "chemicals", "chemistry", "lab", "solvay", "arkema", "air liquide"]
     },
     "Communication / Media & Entertainment / Telecom": {
         "naf_prefixes": ["59", "60", "61", "63"],
-        "keywords": ["télécom", "média", "publicité", "fibre", "internet", "presse", "journal", "tv", "radio", "marketing", "agence", "communication", "entertainment", "telecom", "broadcasting", "advertising", "media"]
+        "keywords": ["télécom", "média", "publicité", "fibre", "internet", "presse", "journal", "tv", "radio", "marketing", "agence", "communication", "entertainment", "telecom", "broadcasting", "advertising", "media", "orange", "sfr", "bouygues", "free", "publicis", "havas"]
     },
-    "Agri-food / Beverages": {
-        "naf_prefixes": ["10", "11", "01"],
-        "keywords": ["agroalimentaire", "aliments", "boissons", "food", "beverage", "agri", "agriculture", "vin", "spiritueux", "bière", "champagne", "nutrition", "snack", "fmcg", "dairy", "laitier", "viande"]
+    "Construction": {
+        "naf_prefixes": ["41", "42", "43"],
+        "keywords": ["btp", "construction", "bâtiment", "génie civil", "infrastructure", "travaux", "architecture", "maçonnerie", "électicité", "plomberie", "architect", "builder", "contractor", "civil", "renovation", "vinci", "eiffage", "bouygues construction"]
     },
-    "Construction & Engineering": {
-        "naf_prefixes": ["41", "42", "43", "711"],
-        "keywords": ["btp", "construction", "bâtiment", "génie civil", "infrastructure", "travaux", "architecture", "ingénierie", "engineering", "maçonnerie", "électicité", "plomberie", "architect", "builder", "contractor", "civil", "renovation"]
+    "Consulting / IT Services": {
+        "naf_prefixes": ["62", "631", "582", "702", "692", "7112", "712", "732", "74"],
+        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "rub", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini", "deloitte", "kpmg", "pwc", "mckinsey", "bain", "bcg", "accenture", "sogeti", "sopra", "wavestone", "alteca", "umanis"]
     },
-    "Consulting / Audit / Professional Services": {
-        "naf_prefixes": ["702", "692", "7112", "712", "732", "74"],
-        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini", "deloitte", "kpmg", "pwc", "mckinsey", "bain", "bcg", "accenture", "sogeti", "sopra", "wavestone", "business services", "bpo"]
+    "CPG (Consumer Packaged Goods)": {
+        "naf_prefixes": ["204"],
+        "keywords": ["fmcg", "biens de consommation", "hygiène", "produits ménagers", "cosmétique", "beauté", "parfum", "shampoing", "savon", "lessive", "cpg", "consumer goods", "l'oréal", "procter", "gamble", "unilever", "danone", "nestlé", "henkel"]
     },
-    "Education / Training": {
+    "Education": {
         "naf_prefixes": ["85"],
         "keywords": ["éducation", "formation", "école", "université", "training", "learning", "elearning", "edtech", "campus", "formation continue", "school", "university", "academy", "college"]
     },
-    "Energies / Utilities": {
+    "Energy / Utilities": {
         "naf_prefixes": ["35", "36", "37", "38", "39"],
-        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol", "renewables", "green", "carbon", "hydrogen", "edf", "engie", "total", "veolia"]
+        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol", "renewables", "green", "carbon", "hydrogen", "edf", "engie", "total", "veolia", "suez"]
     },
-    "Finance / Insurance": {
-        "naf_prefixes": ["64", "65", "66"],
-        "keywords": ["banque", "assurance", "finance", "investissement", "gestion d'actifs", "courtier", "mutuelle", "crédit", "bank", "insurance", "invest", "wealth", "fintech", "payment", "paiement", "trading", "crypto", "blockchain", "vc", "private equity", "fund", "fonds"]
+    "Finance / Real Estate": {
+        "naf_prefixes": ["64", "66", "68"],
+        "keywords": ["finance", "immobilier", "investissement", "gestion d'actifs", "courtier", "syndic", "promoteur", "real estate", "realty", "property", "logement", "immo", "wealth", "fintech", "payment", "trading", "crypto", "blockchain", "vc", "private equity", "fund", "foncia", "nexity"]
+    },
+    "Food / Beverages": {
+        "naf_prefixes": ["10", "11"],
+        "keywords": ["agroalimentaire", "aliments", "boissons", "food", "beverage", "vin", "spiritueux", "bière", "champagne", "nutrition", "snack", "dairy", "laitier", "viande", "boulangerie", "traiteur"]
     },
     "Healthcare / Medical Services": {
-        "naf_prefixes": ["86", "87", "88", "21"],
-        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "biologie", "laboratoire", "radiologie", "dentaire", "kine"]
+        "naf_prefixes": ["86", "87", "88"],
+        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "radiologie", "dentaire", "kine", "ramsay", "elsan"]
     },
-    "Hotels / Restaurants / Events": {
-        "naf_prefixes": ["55", "56", "823"],
-        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "traiteur", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering", "event", "événementiel", "wedding", "mariage", "conference"]
+    "Hotels / Restaurants": {
+        "naf_prefixes": ["55", "56"],
+        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering", "accor", "club med", "sodexo", "elior"]
     },
-    "Human Resources": {
-        "naf_prefixes": ["78"],
-        "keywords": ["interim", "rh", "ressources humaines", "recrutement", "chasseur de tête", "talent", "portage salarial", "manpower", "adecco", "randstad", "workforce", "staffing", "hr"]
+    "Insurance / Mutual Health Insurance": {
+        "naf_prefixes": ["65"],
+        "keywords": ["assurance", "mutuelle", "courtage", "assureur", "prévoyance", "risques", "insurance", "underwriting", "axa", "allianz", "generali", "maif", "macif", "groupama", "malakoff"]
     },
-    "Legal / Law": {
-        "naf_prefixes": ["691"],
-        "keywords": ["avocat", "juridique", "droit", "notaire", "huissier", "legal", "law", "lawyer", "attorney", "cabinet d'avocat", "barreau", "justice"]
-    },
-    "Luxury / Fashion / Cosmetics": {
-        "naf_prefixes": ["141", "142", "151", "152", "2042"],
-        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "exception", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel", "parfum", "cosmétique", "beauté", "makeup", "skincare", "fragrance", "beauty"]
+    "Luxury": {
+        "naf_prefixes": ["141", "142", "151", "152"],
+        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel", "lvmh", "kering", "hermès", "chanel", "dior", "vuitton", "gucci", "prada"]
     },
     "Manufacturing / Industry": {
-        "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"],
-        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "automotive", "aéronautique", "aerospace", "defense", "textile", "imprimerie", "packaging"]
+        "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"],
+        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "automotive", "aéronautique", "aerospace", "defense", "textile", "imprimerie", "packaging", "saint-gobain", "schneider", "legrand", "michelin"]
     },
     "Not For Profit": {
-        "naf_prefixes": ["94"],
-        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire", "syndicat", "union", "club"]
+        "naf_prefixes": ["94", "91"],
+        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire", "syndicat", "union", "club", "croix rouge", "secours populaire"]
     },
     "Pharmaceutics": {
         "naf_prefixes": ["21"],
-        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine", "lifescience"]
+        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine", "lifescience", "sanofi", "servier", "pfizer", "moderna"]
     },
     "Public administration & government": {
         "naf_prefixes": ["84"],
         "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail", "ambassade", "consulat"]
     },
-    "Real Estate": {
-        "naf_prefixes": ["68"],
-        "keywords": ["immobilier", "agence immobilière", "bailleur", "syndic", "promoteur", "real estate", "realty", "property", "logement", "immo", "coworking", "office space"]
-    },
     "Retail": {
         "naf_prefixes": ["45", "46", "47"],
-        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "department store", "shopping", "mall", "outlet", "franchise"]
+        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "shopping", "mall", "outlet", "franchise", "carrefour", "auchan", "leclerc", "decathlon", "fnac", "darty", "amazon", "cdiscount"]
     },
     "Tech / Software": {
-        "naf_prefixes": ["582", "6201", "631", "620", "262"],
-        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "data", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "it", "digital services", "start-up"]
+        "naf_prefixes": ["582", "6201", "6312", "262"],
+        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "start-up", "google", "microsoft", "apple", "meta", "aws", "salesforce", "sap", "oracle"]
     },
-    "Sports / Leisure": {
-        "naf_prefixes": ["931", "932"],
-        "keywords": ["sport", "loisir", "club de sport", "fitness", "gym", "stade", "football", "tennis", "piscine", "casino", "gaming", "betting", "paris sportifs", "leisure"]
-    },
-    "Transport / Logistics": {
+    "Transportation, Logistics & Storage": {
         "naf_prefixes": ["49", "50", "51", "52", "53"],
-        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "bateau", "compagnie aérienne", "rail", "ferroviaire", "maritime", "port"]
+        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "bateau", "compagnie aérienne", "rail", "ferroviaire", "maritime", "port", "sncf", "air france", "maersk", "cma cgm", "dhl", "fedex", "ups"]
     }
 }
 
@@ -166,26 +158,39 @@ GLOBAL_OVERRIDES = {
     "AMAZON": {"Secteur": "Tech / Software", "Nom Officiel": "AMAZON.COM INC", "Adresse": "Seattle, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "META": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "FACEBOOK": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "LVMH": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "CHRISTIAN DIOR": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHRISTIAN DIOR SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "LOUIS VUITTON": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LOUIS VUITTON MALLETIER", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "CHRISTIAN LOUBOUTIN": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHRISTIAN LOUBOUTIN", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
-    "CHANEL": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHANEL SAS", "Adresse": "Neuilly-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "HERMES": {"Secteur": "Luxury / Fashion", "Nom Officiel": "HERMES INTERNATIONAL", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "GUCCI": {"Secteur": "Luxury / Fashion", "Nom Officiel": "GUCCI", "Adresse": "Florence (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "PRADA": {"Secteur": "Luxury / Fashion", "Nom Officiel": "PRADA SPA", "Adresse": "Milan (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "LVMH": {"Secteur": "Luxury", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CHRISTIAN DIOR": {"Secteur": "Luxury", "Nom Officiel": "CHRISTIAN DIOR SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "LOUIS VUITTON": {"Secteur": "Luxury", "Nom Officiel": "LOUIS VUITTON MALLETIER", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CHRISTIAN LOUBOUTIN": {"Secteur": "Luxury", "Nom Officiel": "CHRISTIAN LOUBOUTIN", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
+    "CHANEL": {"Secteur": "Luxury", "Nom Officiel": "CHANEL SAS", "Adresse": "Neuilly-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "HERMES": {"Secteur": "Luxury", "Nom Officiel": "HERMES INTERNATIONAL", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "GUCCI": {"Secteur": "Luxury", "Nom Officiel": "GUCCI", "Adresse": "Florence (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "PRADA": {"Secteur": "Luxury", "Nom Officiel": "PRADA SPA", "Adresse": "Milan (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "SFR": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "SFR", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "FREE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "ILIAD": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "BOUYGUES": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "BOUYGUES TELECOM", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "BOUYGUES": {"Secteur": "Construction", "Nom Officiel": "BOUYGUES SA", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "BOUYGUES TELECOM": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "BOUYGUES TELECOM", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     
+    # Consulting (Added due to user feedback)
+    "CAPGEMINI": {"Secteur": "Consulting / IT Services", "Nom Officiel": "CAPGEMINI SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "KPMG": {"Secteur": "Consulting / IT Services", "Nom Officiel": "KPMG S.A", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "DELOITTE": {"Secteur": "Consulting / IT Services", "Nom Officiel": "DELOITTE SAS", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "EY": {"Secteur": "Consulting / IT Services", "Nom Officiel": "ERNST & YOUNG", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "PWC": {"Secteur": "Consulting / IT Services", "Nom Officiel": "PWC FRANCE", "Adresse": "Neuilly-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "ACCENTURE": {"Secteur": "Consulting / IT Services", "Nom Officiel": "ACCENTURE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    
+    # Retail / Grands Magasins
+    "GALERIES LAFAYETTE": {"Secteur": "Retail", "Nom Officiel": "GALERIES LAFAYETTE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "PRINTEMPS": {"Secteur": "Retail", "Nom Officiel": "PRINTEMPS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+
     # Tech / Web
     "SPOTIFY": {"Secteur": "Tech / Software", "Nom Officiel": "SPOTIFY TECHNOLOGY", "Adresse": "Stockholm (Sweden)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "UBER": {"Secteur": "Tech / Software", "Nom Officiel": "UBER TECHNOLOGIES", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "AIRBNB": {"Secteur": "Tech / Software", "Nom Officiel": "AIRBNB INC.", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "AIR BNB": {"Secteur": "Tech / Software", "Nom Officiel": "AIRBNB INC.", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
-    "NETFLIX": {"Secteur": "Entertainment / Media", "Nom Officiel": "NETFLIX INC.", "Adresse": "Los Gatos, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "NETFLIX": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "NETFLIX INC.", "Adresse": "Los Gatos, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "NVIDIA": {"Secteur": "Tech / Software", "Nom Officiel": "NVIDIA CORP", "Adresse": "Santa Clara, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
     # Auto
@@ -195,8 +200,8 @@ GLOBAL_OVERRIDES = {
     "VOLKSWAGEN": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "VOLKSWAGEN AG", "Adresse": "Wolfsburg (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
     # Consumer
-    "COCA COLA": {"Secteur": "Agri-food / Beverages", "Nom Officiel": "THE COCA-COLA COMPANY", "Adresse": "Atlanta, GA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "PEPSI": {"Secteur": "Agri-food / Beverages", "Nom Officiel": "PEPSICO INC.", "Adresse": "Harrison, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "COCA COLA": {"Secteur": "Food / Beverages", "Nom Officiel": "THE COCA-COLA COMPANY", "Adresse": "Atlanta, GA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "PEPSI": {"Secteur": "Food / Beverages", "Nom Officiel": "PEPSICO INC.", "Adresse": "Harrison, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "SAMSUNG": {"Secteur": "Tech / Software", "Nom Officiel": "SAMSUNG ELECTRONICS", "Adresse": "Suwon (South Korea)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "NIKE": {"Secteur": "Retail", "Nom Officiel": "NIKE INC.", "Adresse": "Beaverton, OR (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
@@ -218,14 +223,14 @@ GLOBAL_OVERRIDES = {
     "ACTION": {"Secteur": "Retail", "Nom Officiel": "ACTION B.V.", "Adresse": "Zwaagdijk (Netherlands)", "Région": "Monde", "Effectif": "10 000+ salariés"},
 
     # Fixes from User Feedback
-    "DISNEY": {"Secteur": "Entertainment / Media", "Nom Officiel": "THE WALT DISNEY COMPANY", "Adresse": "Burbank, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "DISNEY": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "THE WALT DISNEY COMPANY", "Adresse": "Burbank, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "DECATHLON": {"Secteur": "Retail", "Nom Officiel": "DECATHLON SE", "Adresse": "Villeneuve-d'Ascq (France)", "Région": "Hauts-de-France", "Effectif": "10 000+ salariés"},
-    "LONGCHAMP": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LONGCHAMP SAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
+    "LONGCHAMP": {"Secteur": "Luxury", "Nom Officiel": "LONGCHAMP SAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
     "MONOPRIX": {"Secteur": "Retail", "Nom Officiel": "MONOPRIX", "Adresse": "Clichy (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "PERNOD RICARD": {"Secteur": "Agri-food / Beverages", "Nom Officiel": "PERNOD RICARD", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "PERNOD RICARD": {"Secteur": "Food / Beverages", "Nom Officiel": "PERNOD RICARD", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "PFIZER": {"Secteur": "Pharmaceutics", "Nom Officiel": "PFIZER INC.", "Adresse": "New York, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "LA POSTE": {"Secteur": "Transport / Logistics", "Nom Officiel": "LA POSTE", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "GROUPE LA POSTE": {"Secteur": "Transport / Logistics", "Nom Officiel": "LA POSTE", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "LA POSTE": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "LA POSTE", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "GROUPE LA POSTE": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "LA POSTE", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "TDF": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "TDF", "Adresse": "Montrouge (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
     "SYMBIO": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SYMBIO", "Adresse": "Vénissieux (France)", "Région": "Auvergne-Rhône-Alpes", "Effectif": "500+ salariés"},
     "APRIL": {"Secteur": "Insurance / Mutual Health Insurance", "Nom Officiel": "APRIL", "Adresse": "Lyon (France)", "Région": "Auvergne-Rhône-Alpes", "Effectif": "1 000+ salariés"},
@@ -240,7 +245,7 @@ GLOBAL_OVERRIDES = {
     
     # International Tech / Electronics (Added for safety)
     "ADOBE": {"Secteur": "Tech / Software", "Nom Officiel": "ADOBE INC.", "Adresse": "San Jose, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "NINTENDO": {"Secteur": "Entertainment / Media", "Nom Officiel": "NINTENDO CO., LTD", "Adresse": "Kyoto (Japan)", "Région": "Monde", "Effectif": "5 000+ salariés"},
+    "NINTENDO": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "NINTENDO CO., LTD", "Adresse": "Kyoto (Japan)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "PHILIPS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "KONINKLIJKE PHILIPS", "Adresse": "Amsterdam (Netherlands)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "SALESFORCE": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
@@ -390,7 +395,7 @@ def categorize_company_logic(raw_input):
              return { "Input": raw_input, "Nom Officiel": "N/A", "Secteur": "N/A", "Détail": "Email Ignoré", "Source": "Filtre", "Score": "0", "Adresse": "-", "Région": "-", "Lien": "-" }
 
         # 2. Call API
-        api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=1"
+        api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=5"
         
         naf_code = None
         official_name = company_name
@@ -405,25 +410,35 @@ def categorize_company_logic(raw_input):
             if response.status_code == 200:
                 data = response.json()
                 if data and data['results']:
-                    res = data['results'][0]
-                    # Filter generic committee results if possible
-                    if "COMITE" not in res.get('nom_complet', '').upper():
+                    # Loop to find the first non-CSE/COMITE result
+                    best_res = None
+                    for res in data['results']:
+                         name_check = res.get('nom_complet', '').upper()
+                         if "COMITE" not in name_check and "CSE " not in name_check:
+                              best_res = res
+                              break
+                    
+                    # If all were committees, fallback to the first one (better than nothing) or keep searching
+                    if not best_res: 
+                         best_res = data['results'][0]
+                    
+                    if best_res:
                         search_success = True
-                        naf_code = res.get('activite_principale')
-                        official_name = res.get('nom_complet')
+                        naf_code = best_res.get('activite_principale')
+                        official_name = best_res.get('nom_complet')
                         
                         # Address / Region
-                        siege = res.get('siege', {})
-                        address = siege.get('adresse', res.get('adresse', ''))
+                        siege = best_res.get('siege', {})
+                        address = siege.get('adresse', best_res.get('adresse', ''))
                         region = siege.get('libelle_region', '')
-                        if not region: region = res.get('region', '')
+                        if not region: region = best_res.get('region', '')
                         
                         # Simple Dept Fallback
                         cp = siege.get('code_postal', '')
                         if not region and cp:
                              region = f"France ({cp[:2]})"
                         
-                        siren = res.get('siren')
+                        siren = best_res.get('siren')
                         if siren: link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}"
         except Exception as e:
             print(f"API Call Error: {e}")
