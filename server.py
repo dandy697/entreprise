@@ -71,7 +71,7 @@ SECTOR_CONFIG = {
     },
     "Transport / Logistics": {
         "naf_prefixes": ["49", "50", "51", "52", "53"],
-        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis"]
+        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "flight", "compagnie aérienne"]
     },
     "Energies / Utilities": {
         "naf_prefixes": ["35", "36", "37", "38", "39"],
@@ -79,7 +79,7 @@ SECTOR_CONFIG = {
     },
     "Healthcare / Medical Services": {
         "naf_prefixes": ["86", "87", "88", "21"],
-        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor"]
+        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "biologie", "laboratoire"]
     },
     "Hotels / Restaurants": {
         "naf_prefixes": ["55", "56"],
@@ -99,7 +99,7 @@ SECTOR_CONFIG = {
     },
     "Not For Profit": {
         "naf_prefixes": ["94"],
-        "keywords": ["association", "ong", "fondation", "bénévolat", "caritatif", "solidaire", "général", "non-profit", "charity", "foundation", "ngo"]
+        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire"]
     },
     "Pharmaceutics": {
         "naf_prefixes": ["21"],
@@ -107,11 +107,15 @@ SECTOR_CONFIG = {
     },
     "Public administration & government": {
         "naf_prefixes": ["84"],
-        "keywords": ["administration", "état", "ministère", "service public", "mairie", "collectivité", "préfecture", "government", "public sector", "administration", "municipality"]
+        "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail"]
+    },
+    "Real Estate": {
+        "naf_prefixes": ["68"],
+        "keywords": ["immobilier", "agence immobilière", "bailleur", "syndic", "promoteur", "real estate", "realty", "property", "logement"]
     },
     "Retail": {
-        "naf_prefixes": ["47", "46", "45"],
-        "keywords": ["commerce", "vente", "magasin", "boutique", "retail", "distribution", "e-commerce", "achat", "shop", "store", "supermarket", "mall", "market"]
+        "naf_prefixes": ["45", "46", "47"],
+        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "department store", "shopping", "mall"]
     },
     "Tech / Software": {
         "naf_prefixes": ["582", "6201", "631", "620"],
@@ -329,7 +333,7 @@ def analyze_web_content(company_name):
         final_scores = scores_snippet
             
         if not final_scores or all(score == 0 for score in final_scores.values()):
-             return "Unknown", f"Web Analysis ({source_url}) - No keywords in snippet", 0, ""
+             return "Unknown", f"Web Analysis ({source_url}) - No keywords in snippet", 0, page_title
              
         best_sector = max(final_scores, key=final_scores.get)
         max_score = final_scores[best_sector]
@@ -337,7 +341,7 @@ def analyze_web_content(company_name):
         if max_score > 0:
              return best_sector, f"Web Analysis ({source_url})", max_score, page_title
         
-        return "Unknown", f"Web Analysis ({source_url}) - No keywords matched", 0, ""
+        return "Unknown", f"Web Analysis ({source_url}) - No keywords matched", 0, page_title
 
     except Exception as e:
         return None, f"Error (Web): {str(e)}", 0, ""
