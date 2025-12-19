@@ -89,9 +89,9 @@ SECTOR_CONFIG = {
         "naf_prefixes": ["65"],
         "keywords": ["assurance", "mutuelle", "courtier", "protection", "prévoyance", "sinistre", "risque", "assureur", "insurance", "underwriting", "broker", "coverage"]
     },
-    "Luxury": {
+    "Luxury / Fashion": {
         "naf_prefixes": [],
-        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "exception", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end"]
+        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "exception", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel"]
     },
     "Manufacturing / Industry": {
         "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"],
@@ -157,6 +157,11 @@ GLOBAL_OVERRIDES = {
     "LVMH": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "CHRISTIAN DIOR": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHRISTIAN DIOR SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "LOUIS VUITTON": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LOUIS VUITTON MALLETIER", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CHRISTIAN LOUBOUTIN": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHRISTIAN LOUBOUTIN", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
+    "CHANEL": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHANEL SAS", "Adresse": "Neuilly-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "HERMES": {"Secteur": "Luxury / Fashion", "Nom Officiel": "HERMES INTERNATIONAL", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "GUCCI": {"Secteur": "Luxury / Fashion", "Nom Officiel": "GUCCI", "Adresse": "Florence (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "PRADA": {"Secteur": "Luxury / Fashion", "Nom Officiel": "PRADA SPA", "Adresse": "Milan (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "SFR": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "SFR", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "FREE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
@@ -510,11 +515,56 @@ def categorize_company_logic(raw_input):
             best_label_sector = max(label_scores, key=label_scores.get)
             if label_scores[best_label_sector] > 0:
                  return {**result_base, "Secteur": best_label_sector, "Détail": f"NAF: {naf_code} (Label)", "Source": "Officiel (Label)", "Score": f"{label_scores[best_label_sector]}"}
-    
+
         # --- FALLBACK: WEB ANALYSIS (International / No SIRET) ---
         sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
         
-        # If we are here, it means we didn't find a NAF code. 
+        # --- INTELLIGENT RETRY (User Request) ---
+        # If API failed (no NAF) but Web found a nice Title (e.g. "Christian Louboutin | Official"),
+        # TRY API AGAIN with the clean title! This solves "separated compound names" automatically.
+        if not naf_code and title_web:
+             # Clean the title: Remove "Official Site", "Home", " - Wikipedia" etc.
+             clean_title = title_web.split("|")[0].split("-")[0].split("Official")[0].strip()
+             if clean_title and clean_title.lower() != company_name.lower():
+                  print(f"DEBUG: Retrying API with Smart Name: '{clean_title}' (was '{company_name}')")
+                  # ... REPEAT API CALL ... (Simplified duplicate logic for safety)
+                  try:
+                       retry_url = f"https://recherche-entreprises.api.gouv.fr/search?q={clean_title}&per_page=1"
+                       resp_retry = requests.get(retry_url)
+                       if resp_retry.status_code == 200:
+                            data_r = resp_retry.json()
+                            if data_r and data_r['results']:
+                                res_r = data_r['results'][0]
+                                naf_code_r = res_r.get('activite_principale')
+                                if naf_code_r and "COMITE" not in res_r.get('nom_complet', '').upper():
+                                     # SUCCESS! We found it with the smart name.
+                                     official_name = res_r.get('nom_complet')
+                                     naf_code = naf_code_r
+                                     naf_label = res_r.get('libelle_activite_principale', '')
+                                     sector_api_r = get_sector_from_naf(naf_code_r)
+                                     
+                                     # Update address/region from new result
+                                     siege_r = res_r.get('siege', {})
+                                     address = siege_r.get('adresse', res_r.get('adresse', ''))
+                                     # Recalculate region if needed (simplified)
+                                     region = siege_r.get('libelle_region') or "France"
+                                     
+                                     if sector_api_r:
+                                          return {
+                                              "Input": raw_input,
+                                              "Nom Officiel": official_name,
+                                              "Secteur": sector_api_r,
+                                              "Détail": f"Smart Retry: Found via '{clean_title}'",
+                                              "Source": "Officiel (Smart Search)",
+                                              "Score": "95%",
+                                              "Adresse": address,
+                                              "Région": region,
+                                              "Lien": f"https://annuaire-entreprises.data.gouv.fr/entreprise/{res_r.get('siren')}"
+                                          }
+                  except Exception as ex:
+                       print(f"Retry failed: {ex}")
+
+        # If we are here, it means we didn't find a NAF code (even after retry). 
         # Likely international or just name match without NAF.
         # Update visuals if they were "Non renseigné"
         if address == "Non renseigné": address = "International / Web"
@@ -527,7 +577,7 @@ def categorize_company_logic(raw_input):
             "Détail": f"Web Keywords ({score_web})",
             "Source": source_web + " (Hors France)",
             "Score": f"{score_web}",
-            "Adresse": address,
+            "Lien": "#",
             "Région": region
         }
     
