@@ -30,100 +30,88 @@ SECTOR_CONFIG = {
         "keywords": ["télécom", "média", "publicité", "fibre", "internet", "presse", "journal", "tv", "radio", "marketing", "agence", "communication", "entertainment", "telecom", "broadcasting", "advertising", "media"]
     },
     "Agri-food / Beverages": {
-        "naf_prefixes": ["10", "11", "01", "463"],
-        "keywords": ["agroalimentaire", "food", "beverage", "boisson", "agriculture", "vin", "champagne", "spiritueux", "traiteur", "viande", "lait", "bio", "pernod"]
+        "naf_prefixes": ["10", "11", "01"],
+        "keywords": ["agroalimentaire", "aliments", "boissons", "food", "beverage", "agri", "agriculture", "vin", "spiritueux", "bière", "champagne", "nutrition", "snack", "fmcg", "dairy", "laitier", "viande"]
     },
-    "Retail": {
-        "naf_prefixes": ["47", "45", "46", "464"],
-        "keywords": ["commerce", "retail", "distribution", "magasin", "boutique", "vente", "e-commerce", "wholesaler", "supermarket", "fashion", "mode", "luxe", "parfum", "cosmétique", "longchamp"]
+    "Communication / Media & Entertainment / Telecom": {
+        "naf_prefixes": ["58", "59", "60", "61", "90", "91", "92", "93"],
+        "keywords": ["media", "entertainment", "telecom", "presse", "journalisme", "news", "communication", "marketing", "publicité", "agence", "production", "film", "musique", "tv", "radio", "broadcast", "internet provider", "fai", "mobile", "telcom", "operator", "fiber", "cinema", "gaming", "esport"]
     },
-    "Luxury / Fashion": {
-        "naf_prefixes": ["14", "15"],
-        "keywords": ["luxe", "fashion", "haute couture", "mode", "maroquinerie", "joaillerie", "parfum", "cosmétique", "beaute", "beauty"]
+    "Construction & Engineering": {
+        "naf_prefixes": ["41", "42", "43", "711"],
+        "keywords": ["btp", "construction", "bâtiment", "génie civil", "infrastructure", "travaux", "architecture", "ingénierie", "engineering", "maçonnerie", "électicité", "plomberie", "architect", "builder", "contractor", "civil", "renovation"]
     },
-    "Construction / Real Estate": {
-        "naf_prefixes": ["41", "42", "43", "68", "711", "681", "682", "683"],
-        "keywords": ["btp", "construction", "bâtiment", "travaux", "chantier", "rénovation", "gros oeuvre", "maçonnerie", "architecte", "immobilier", "promoteur", "building", "real estate", "foncière", "agence immobilière"]
+    "Consulting / Audit / Professional Services": {
+        "naf_prefixes": ["702", "692", "7112", "712", "732", "74"],
+        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini", "deloitte", "kpmg", "pwc", "mckinsey", "bain", "bcg", "accenture", "sogeti", "sopra", "wavestone", "business services", "bpo"]
     },
-    "Consulting / IT Services": {
-        "naf_prefixes": ["62", "702", "69", "70", "71", "73", "74"],
-        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini"]
-    },
-    "Human Resources": {
-        "naf_prefixes": ["78"],
-        "keywords": ["interim", "rh", "ressources humaines", "recrutement", "chasseur de tête", "talent", "portage salarial", "manpower", "adecco", "randstad"]
-    },
-    "Entertainment / Media": {
-        "naf_prefixes": ["59", "60", "90", "91", "93"],
-        "keywords": ["media", "entertainment", "divertissement", "cinéma", "télévision", "production", "presse", "journalisme", "culture", "loisir", "parc d'attraction", "musée", "spectacle", "disney", "netflix"]
-    },
-    "Hotels / Restaurants": {
-        "naf_prefixes": ["55", "56"],
-        "keywords": ["hotel", "restauran", "hébergement", "tourisme", "café", "bar", "traiteur", "restauration", "hospitality"]
-    },
-    "Finance / Insurance": {
-        "naf_prefixes": ["64", "65", "66"],
-        "keywords": ["banque", "assurance", "finance", "investissement", "gestion d'actifs", "courtier", "mutuelle", "crédit", "bank", "insurance", "invest", "wealth"]
-    },
-    "Manufacturing / Industry": {
-        "naf_prefixes": ["20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"],
-        "keywords": ["industrie", "manufacturing", "usine", "production", "fabrication", "électronique", "mécanique", "chimie", "pharma", "automobile", "aéronautique", "industry"]
-    },
-    "Transport / Logistics": {
-        "naf_prefixes": ["49", "50", "51", "52", "53"],
-        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "flight", "compagnie aérienne"]
+    "Education / Training": {
+        "naf_prefixes": ["85"],
+        "keywords": ["éducation", "formation", "école", "université", "training", "learning", "elearning", "edtech", "campus", "formation continue", "school", "university", "academy", "college"]
     },
     "Energies / Utilities": {
         "naf_prefixes": ["35", "36", "37", "38", "39"],
-        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol"]
+        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol", "renewables", "green", "carbon", "hydrogen", "edf", "engie", "total", "veolia"]
+    },
+    "Finance / Insurance": {
+        "naf_prefixes": ["64", "65", "66"],
+        "keywords": ["banque", "assurance", "finance", "investissement", "gestion d'actifs", "courtier", "mutuelle", "crédit", "bank", "insurance", "invest", "wealth", "fintech", "payment", "paiement", "trading", "crypto", "blockchain", "vc", "private equity", "fund", "fonds"]
     },
     "Healthcare / Medical Services": {
         "naf_prefixes": ["86", "87", "88", "21"],
-        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "biologie", "laboratoire"]
+        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "biologie", "laboratoire", "radiologie", "dentaire", "kine"]
     },
-    "Hotels / Restaurants": {
-        "naf_prefixes": ["55", "56"],
-        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "traiteur", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering"]
+    "Hotels / Restaurants / Events": {
+        "naf_prefixes": ["55", "56", "823"],
+        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "traiteur", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering", "event", "événementiel", "wedding", "mariage", "conference"]
     },
-    "Insurance / Mutual Health Insurance": {
-        "naf_prefixes": ["65"],
-        "keywords": ["assurance", "mutuelle", "courtier", "protection", "prévoyance", "sinistre", "risque", "assureur", "insurance", "underwriting", "broker", "coverage"]
+    "Human Resources": {
+        "naf_prefixes": ["78"],
+        "keywords": ["interim", "rh", "ressources humaines", "recrutement", "chasseur de tête", "talent", "portage salarial", "manpower", "adecco", "randstad", "workforce", "staffing", "hr"]
     },
-    "Luxury / Fashion": {
-        "naf_prefixes": [],
-        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "exception", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel"]
+    "Legal / Law": {
+        "naf_prefixes": ["691"],
+        "keywords": ["avocat", "juridique", "droit", "notaire", "huissier", "legal", "law", "lawyer", "attorney", "cabinet d'avocat", "barreau", "justice"]
+    },
+    "Luxury / Fashion / Cosmetics": {
+        "naf_prefixes": ["141", "142", "151", "152", "2042"],
+        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "exception", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel", "parfum", "cosmétique", "beauté", "makeup", "skincare", "fragrance", "beauty"]
     },
     "Manufacturing / Industry": {
         "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"],
-        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "tesla", "ev", "electric vehicle", "voiture", "automotive"]
+        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "automotive", "aéronautique", "aerospace", "defense", "textile", "imprimerie", "packaging"]
     },
     "Not For Profit": {
         "naf_prefixes": ["94"],
-        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire"]
+        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire", "syndicat", "union", "club"]
     },
     "Pharmaceutics": {
         "naf_prefixes": ["21"],
-        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine"]
+        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine", "lifescience"]
     },
     "Public administration & government": {
         "naf_prefixes": ["84"],
-        "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail"]
+        "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail", "ambassade", "consulat"]
     },
     "Real Estate": {
         "naf_prefixes": ["68"],
-        "keywords": ["immobilier", "agence immobilière", "bailleur", "syndic", "promoteur", "real estate", "realty", "property", "logement"]
+        "keywords": ["immobilier", "agence immobilière", "bailleur", "syndic", "promoteur", "real estate", "realty", "property", "logement", "immo", "coworking", "office space"]
     },
     "Retail": {
         "naf_prefixes": ["45", "46", "47"],
-        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "department store", "shopping", "mall"]
+        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "department store", "shopping", "mall", "outlet", "franchise"]
     },
     "Tech / Software": {
-        "naf_prefixes": ["582", "6201", "631", "620"],
-        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "data", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "apple", "iphone", "ios", "mac", "electronics", "smartphone"]
+        "naf_prefixes": ["582", "6201", "631", "620", "262"],
+        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "data", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "it", "digital services", "start-up"]
     },
-    "Transportation, Logistics & Storage": {
+    "Sports / Leisure": {
+        "naf_prefixes": ["931", "932"],
+        "keywords": ["sport", "loisir", "club de sport", "fitness", "gym", "stade", "football", "tennis", "piscine", "casino", "gaming", "betting", "paris sportifs", "leisure"]
+    },
+    "Transport / Logistics": {
         "naf_prefixes": ["49", "50", "51", "52", "53"],
-        "keywords": ["transport", "logistique", "livraison", "fret", "colis", "camion", "train", "avion", "bateau", "supply chain", "entrepôt", "stockage", "transportation", "logistics", "shipping", "freight", "cargo"]
+        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "bateau", "compagnie aérienne", "rail", "ferroviaire", "maritime", "port"]
     }
 }
 
@@ -425,18 +413,24 @@ def categorize_company_logic(raw_input):
                     siege = best_result.get('siege', {})
                     address = siege.get('adresse', best_result.get('adresse', ''))
                     
-                    # Region logic
-                    cp = siege.get('code_postal', '')
-                    city = siege.get('libelle_commune', '')
-                    
-                    # Priority: Siege Region Name > Root Region > CP Inference
-                    region = siege.get('libelle_region') or best_result.get('region') or ""
-                    
-                    if not region and cp:
-                         if cp.startswith('75') or cp.startswith('92') or cp.startswith('93') or cp.startswith('94') or cp.startswith('78') or cp.startswith('91') or cp.startswith('95') or cp.startswith('77'):
-                             region = "Île-de-France"
-                         else:
-                             region = f"{city} ({cp[:2]})"
+                # Region logic
+                cp = siege.get('code_postal', '')
+                city = siege.get('libelle_commune', '')
+                
+                # Priority: Siege Region Name > DEPT_TO_REGION Map > CP Inference
+                region = siege.get('libelle_region') or best_result.get('region') or ""
+                
+                if not region:
+                    # Try to map from Dept code (first 2 chars of CP)
+                    if cp and len(cp) >= 2:
+                        dept_code = cp[:2]
+                        # Handling DOM-TOM (971, 972...)
+                        if cp.startswith('97'): dept_code = cp[:3]
+                        
+                        region = DEPT_TO_REGION.get(dept_code, "")
+                
+                if not region and cp:
+                     region = f"{city} ({cp[:2]})" # Last resort fallback
                     
                     # Headcount - Check root then unite_legale
                     tranche = best_result.get('tranche_effectifs')
@@ -547,11 +541,15 @@ def categorize_company_logic(raw_input):
                                      naf_label = res_r.get('libelle_activite_principale', '')
                                      sector_api_r = get_sector_from_naf(naf_code_r)
                                      
-                                     # Update address/region from new result
-                                     siege_r = res_r.get('siege', {})
-                                     address = siege_r.get('adresse', res_r.get('adresse', ''))
-                                     # Recalculate region if needed (simplified)
-                                     region = siege_r.get('libelle_region') or "France"
+                                     # Recalculate region map
+                                     region_r = siege_r.get('libelle_region')
+                                     cp_r = siege_r.get('code_postal', '')
+                                     if not region_r and cp_r:
+                                          # Use the same map logic
+                                          dept_code = cp_r[:3] if cp_r.startswith('97') else cp_r[:2]
+                                          region_r = DEPT_TO_REGION.get(dept_code, "France")
+                                     
+                                     region = region_r or "France"
                                      
                                      if sector_api_r:
                                           return {
@@ -581,7 +579,8 @@ def categorize_company_logic(raw_input):
             "Détail": f"Web Keywords ({score_web})",
             "Source": source_web + " (Hors France)",
             "Score": f"{score_web}",
-            "Lien": "#",
+            "Lien": "#", 
+            "Adresse": address, # Should be explicitly returned
             "Région": region
         }
     
