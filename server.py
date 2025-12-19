@@ -346,6 +346,32 @@ def categorize_company_logic(raw_input):
     if naf_code:
         sector_naf = get_sector_from_naf(naf_code)
         if sector_naf:
+            # --- SMART CONFLICT RESOLUTION ---
+            # If API gives "Agriculture" or "Construction" (common for small local companies with big names like "Apple", "Orange")
+            # We double check with Web Analysis to see if it's actually a Global Brand (Tech, Retail, etc.)
+            
+            is_suspicious_sector = sector_naf in ["Agriculture / Livestock / Seafood", "Construction / Real Estate", "Agri-food / Beverages"]
+            
+            if is_suspicious_sector:
+                 # Check the web
+                 sector_web, source_web, score_web = analyze_web_content(company_name)
+                 
+                 # If Web says "Tech" or "Retail" (and score is decent), we OVERRIDE the API.
+                 # Example: API says "Apple = Agriculture", Web says "Apple = Tech". We take Tech.
+                 if sector_web and sector_web != "Non Trouvé" and sector_web != sector_naf and score_web >= 4:
+                      address = "International / Web" # Override address too as it's likely wrong
+                      region = "Monde"
+                      return {
+                          **result_base,
+                          "Secteur": sector_web,
+                          "Détail": f"Web Conflict Override (API was {sector_naf})", 
+                          "Source": f"{source_web} (Correction)", 
+                          "Score": f"{score_web}",
+                          "Adresse": address,
+                          "Région": region,
+                          "Nom Officiel": company_name.upper() # Use input name usually better for global brands
+                      }
+
             return {**result_base, "Secteur": sector_naf, "Détail": f"NAF: {naf_code}", "Source": "Officiel (Code NAF)", "Score": "100%"}
 
     if naf_label:
