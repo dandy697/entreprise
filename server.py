@@ -456,24 +456,24 @@ def categorize_company_logic(raw_input):
                 
                 if not region and cp:
                      region = f"{city} ({cp[:2]})" # Last resort fallback
-                    
-                    # Headcount - Check root then unite_legale
-                    tranche = best_result.get('tranche_effectifs')
-                    unite_legale = best_result.get('unite_legale') or {}
-                    
-                    if not tranche:
-                        tranche = unite_legale.get('tranche_effectifs')
-                    
-                    if not tranche: tranche = "NN"
-                    
-                    headcount = TRANCHE_EFFECTIFS.get(tranche, "Non renseigné")
-                    
-                    # Link - Use SIREN which is safer than slug
-                    siren = best_result.get('siren')
-                    if not siren:
-                         siren = unite_legale.get('siren')
-                         
-                    link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}" if siren else "#"
+                
+                # Headcount - Check root then unite_legale
+                tranche = best_result.get('tranche_effectifs')
+                unite_legale = best_result.get('unite_legale') or {}
+                
+                if not tranche:
+                    tranche = unite_legale.get('tranche_effectifs')
+                
+                if not tranche: tranche = "NN"
+                
+                headcount = TRANCHE_EFFECTIFS.get(tranche, "Non renseigné")
+                
+                # Link - Use SIREN which is safer than slug
+                siren = best_result.get('siren')
+                if not siren:
+                     siren = unite_legale.get('siren')
+                     
+                link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}" if siren else "#"
     
         except Exception as e:
             print(f"API Error: {e}")
