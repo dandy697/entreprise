@@ -318,23 +318,23 @@ def analyze_web_content(company_name):
         source_url = ""
         page_title = "" 
         
-            # DuckDuckGo Search (Defensive)
-            try:
-                # Local import to prevent module-level crash if library is missing/incompatible
-                from duckduckgo_search import DDGS
-                with DDGS() as ddgs:
-                     # limit=1
-                     results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
-                     if results:
-                          first_res = results[0]
-                          source_url = first_res.get('href', '')
-                          page_title = first_res.get('title', '')
-                          snippet_text = f"{page_title} {first_res.get('body', '')}"
-            except Exception as e:
-                print(f"DDG Lib Error: {e}")
-                
+        # DuckDuckGo Search (Defensive)
+        try:
+            # Local import to prevent module-level crash if library is missing/incompatible
+            from duckduckgo_search import DDGS
+            with DDGS() as ddgs:
+                 # limit=1
+                 results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
+                 if results:
+                      first_res = results[0]
+                      source_url = first_res.get('href', '')
+                      page_title = first_res.get('title', '')
+                      snippet_text = f"{page_title} {first_res.get('body', '')}"
         except Exception as e:
-            print(f"Web Search General Error: {e}")
+            print(f"DDG Lib Error: {e}")
+            
+    except Exception as e:
+        print(f"Web Search General Error: {e}")
             
         if not snippet_text:
             return None, "URL not found", 0, ""
