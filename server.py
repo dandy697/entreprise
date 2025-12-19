@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from duckduckgo_search import DDGS
+# from duckduckgo_search import DDGS # Moved to local scope for safety
 import time
 import re
 from urllib.parse import urlparse
@@ -305,7 +305,8 @@ def score_text(text, weights=1.0):
     for sector, config in SECTOR_CONFIG.items():
         score = 0
         for keyword in config["keywords"]:
-            count = len(re.findall(r'\\b' + re.escape(keyword) + r'\\b', text))
+            # Valid Regex: r'\b' (Word Boundary). escaped keyword.
+            count = len(re.findall(r'\b' + re.escape(keyword) + r'\b', text))
             score += count * weights
         scores[sector] = score
     return scores
@@ -317,26 +318,30 @@ def analyze_web_content(company_name):
         source_url = ""
         page_title = "" 
         
-        try:
-            # DuckDuckGo Search
-            with DDGS() as ddgs:
-                 # limit=1
-                 results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
-                 if results:
-                      first_res = results[0]
-                      source_url = first_res.get('href', '')
-                      page_title = first_res.get('title', '')
-                      # COMBINE Title + Body from the search result directly!
-                      # This bypasses the need to visit the site (which might block us)
-                      snippet_text = f"{page_title} {first_res.get('body', '')}"
+            # DuckDuckGo Search (Defensive)
+            try:
+                # Local import to prevent module-level crash if library is missing/incompatible
+                from duckduckgo_search import DDGS
+                with DDGS() as ddgs:
+                     # limit=1
+                     results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
+                     if results:
+                          first_res = results[0]
+                          source_url = first_res.get('href', '')
+                          page_title = first_res.get('title', '')
+                          snippet_text = f"{page_title} {first_res.get('body', '')}"
+            except Exception as e:
+                print(f"DDG Lib Error: {e}")
+                
         except Exception as e:
-             print(f"DDG Search Error: {e}")
+            print(f"Web Search General Error: {e}")
             
         if not snippet_text:
             return None, "URL not found", 0, ""
 
         # Score the Snippet directly
-        scores_snippet = score_text(snippet_text, weights=5.0) # High weight because snippet is dense
+        # Fix: Use r'\b' for word boundary instead of r'\\b' (which matches literal backslash)
+        scores_snippet = score_text(snippet_text, weights=5.0)
         
         final_scores = scores_snippet
             
