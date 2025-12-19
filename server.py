@@ -272,55 +272,41 @@ def score_text(text, weights=1.0):
 def analyze_web_content(company_name):
     try:
         search_results = []
+        snippet_text = ""
+        source_url = ""
+        
         try:
             # DuckDuckGo Search
             with DDGS() as ddgs:
                  # limit=1
                  results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
                  if results:
-                      search_results = [results[0]['href']]
+                      first_res = results[0]
+                      source_url = first_res.get('href', '')
+                      # COMBINE Title + Body from the search result directly!
+                      # This bypasses the need to visit the site (which might block us)
+                      snippet_text = f"{first_res.get('title', '')} {first_res.get('body', '')}"
         except Exception as e:
              print(f"DDG Search Error: {e}")
             
-        if not search_results:
+        if not snippet_text:
             return None, "URL not found", 0
 
-        url = search_results[0]
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'}
-        try:
-            response = requests.get(url, headers=headers, timeout=5)
-            response.raise_for_status()
-        except:
-            return None, f"Scraping failed for {url}", 0
-
-        soup = BeautifulSoup(response.text, 'html.parser')
+        # Score the Snippet directly
+        scores_snippet = score_text(snippet_text, weights=5.0) # High weight because snippet is dense
         
-        title = soup.title.string if soup.title else ""
-        meta_desc = soup.find('meta', attrs={'name': 'description'})
-        desc = meta_desc['content'] if meta_desc and 'content' in meta_desc.attrs else ""
-        high_priority_text = f"{title} {desc}"
-        
-        headers_text = " ".join([h.get_text() for h in soup.find_all(['h1', 'h2'])])
-        body_text = " ".join([p.get_text() for p in soup.find_all('p')])[:5000]
-
-        scores_high = score_text(high_priority_text, weights=3.0)
-        scores_med = score_text(headers_text, weights=2.0)
-        scores_low = score_text(body_text, weights=1.0)
-        
-        final_scores = {}
-        for sector in SECTOR_CONFIG.keys():
-            final_scores[sector] = scores_high.get(sector, 0) + scores_med.get(sector, 0) + scores_low.get(sector, 0)
+        final_scores = scores_snippet
             
         if not final_scores or all(score == 0 for score in final_scores.values()):
-             return "Unknown", f"Web Analysis ({url}) - No keywords matched", 0
+             return "Unknown", f"Web Analysis ({source_url}) - No keywords in snippet", 0
              
         best_sector = max(final_scores, key=final_scores.get)
         max_score = final_scores[best_sector]
         
         if max_score > 0:
-             return best_sector, f"Web Analysis ({url})", max_score
+             return best_sector, f"Web Analysis ({source_url})", max_score
         
-        return "Unknown", f"Web Analysis ({url}) - No keywords matched", 0
+        return "Unknown", f"Web Analysis ({source_url}) - No keywords matched", 0
 
     except Exception as e:
         return None, f"Error (Web): {str(e)}", 0
