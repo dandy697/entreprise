@@ -209,7 +209,9 @@ GLOBAL_OVERRIDES = {
     "VISIATIV": {"Secteur": "Tech / Software", "Nom Officiel": "VISIATIV", "Adresse": "Charbonnières-les-Bains (France)", "Région": "Auvergne-Rhône-Alpes", "Effectif": "1 000+ salariés"},
     "AMOOBI": {"Secteur": "Tech / Software", "Nom Officiel": "AMOOBI", "Adresse": "N/A (International)", "Région": "Monde", "Effectif": "10-50 salariés"},
     "SAFRAN AERO BOOSTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"},
-    "SAFRAN AERO BOSOTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"}
+    "SAFRAN AERO BOSOTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"},
+    "SERFIGROUP": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
+    "SERFI INTERNATIONAL": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"}
 }
 
 def get_region_from_dept(zip_code):
