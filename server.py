@@ -541,6 +541,10 @@ def categorize_company_logic(raw_input):
                                      naf_label = res_r.get('libelle_activite_principale', '')
                                      sector_api_r = get_sector_from_naf(naf_code_r)
                                      
+                                     # Update address/region from new result
+                                     siege_r = res_r.get('siege', {})
+                                     address = siege_r.get('adresse', res_r.get('adresse', ''))
+                                     
                                      # Recalculate region map
                                      region_r = siege_r.get('libelle_region')
                                      cp_r = siege_r.get('code_postal', '')
