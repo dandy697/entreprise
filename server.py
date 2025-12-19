@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from googlesearch import search
+from duckduckgo_search import DDGS
 import time
 import re
 from urllib.parse import urlparse
@@ -270,11 +270,16 @@ def score_text(text, weights=1.0):
 
 def analyze_web_content(company_name):
     try:
+        search_results = []
         try:
-            # googlesearch-python usage
-            search_results = list(search(company_name, num_results=1, lang="fr"))
-        except:
-             search_results = list(search(company_name, num_results=1))
+            # DuckDuckGo Search
+            with DDGS() as ddgs:
+                 # limit=1
+                 results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
+                 if results:
+                      search_results = [results[0]['href']]
+        except Exception as e:
+             print(f"DDG Search Error: {e}")
             
         if not search_results:
             return None, "URL not found", 0

@@ -3,6 +3,6 @@ flask-cors
 pandas
 requests
 beautifulsoup4
-googlesearch-python
+duckduckgo-search
 openpyxl
 gunicorn
