@@ -138,24 +138,56 @@ function renderTable(data, prepend = false) {
 
     currentData.forEach(row => {
         // Stats
-        if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") notFound++;
+        if (row["Secteur"].includes("Erreur") || row["Secteur"] === "Error") error++;
+        else if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") notFound++;
         else found++;
 
         const tr = document.createElement('tr');
+        const index = currentData.indexOf(row); // Get index for update
 
-        const statusIcon = (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") ?
-            '<i class="fa-solid fa-circle-exclamation status-icon warning"></i>' :
-            '<i class="fa-solid fa-circle-check status-icon success"></i>';
+        let statusIcon = '<i class="fa-solid fa-circle-check status-icon success"></i>';
+
+        if (row["Secteur"].includes("Erreur") || row["Secteur"] === "Error") {
+            statusIcon = '<i class="fa-solid fa-circle-xmark status-icon error"></i>';
+        } else if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") {
+            statusIcon = '<i class="fa-solid fa-circle-exclamation status-icon warning"></i>';
+        }
 
         const sector = row["Secteur"] === "Unknown" ? "Non Trouvé" : row["Secteur"];
         const region = row["Région"] || "Non renseigné";
-        const link = row["Lien"] && row["Lien"] !== "#" ? `<a href="${row["Lien"]}" target="_blank" class="link-btn">Voir <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : "-";
+
+        // Logic: Hide link for US companies
+        let link = row["Lien"] && row["Lien"] !== "#" ? `<a href="${row["Lien"]}" target="_blank" class="link-btn">Voir <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : "-";
+        if (row["Adresse"] && (row["Adresse"].includes("USA") || row["Adresse"].includes("United States"))) {
+            link = '<span class="text-muted" title="Lien masqué pour USA">-</span>';
+        }
+
+        // Edit Mode Logic
+        let sectorDisplay;
+        if (row._isEditing) {
+            // Dropdown Generation
+            let sectorSelect = `<select class="sector-select" onchange="updateSector(${index}, this.value)" onblur="cancelEdit(${index})">`;
+            let currentInList = false;
+            ALL_SECTORS.forEach(s => {
+                const selected = s === row["Secteur"] ? "selected" : "";
+                if (selected) currentInList = true;
+                sectorSelect += `<option value="${s}" ${selected}>${s}</option>`;
+            });
+            if (!currentInList) {
+                sectorSelect += `<option value="${row["Secteur"]}" selected>${sector}</option>`;
+            }
+            sectorSelect += `</select>`;
+            sectorDisplay = sectorSelect;
+        } else {
+            // Text + Pencil
+            sectorDisplay = `<div class="industry-wrapper"><span class="industry-badge">${sector}</span> <i class="fa-solid fa-pen edit-icon" onclick="enableEdit(${index})"></i></div>`;
+        }
 
         tr.innerHTML = `
             <td>${statusIcon}</td>
             <td>${row["Input"]}</td>
             <td><strong>${row["Nom Officiel"]}</strong></td>
-            <td><span class="industry-badge">${sector}</span></td>
+            <td>${sectorDisplay}</td>
             <td>${row["Adresse"]}</td>
             <td>${region}</td>
             <td>${link}</td>
@@ -165,7 +197,7 @@ function renderTable(data, prepend = false) {
 
     // Update Header and Footer Counts
     document.getElementById('countTotal').innerText = currentData.length;
-    document.getElementById('pluralTotal').innerText = currentData.length > 1 ? 's' : '';
+    // document.getElementById('pluralTotal').innerText = currentData.length > 1 ? 's' : '';
 
     document.getElementById('statFound').innerText = found;
     document.getElementById('statNotFound').innerText = notFound;
@@ -201,4 +233,28 @@ function downloadExcel() {
     a.href = url;
     a.download = `export_entreprises_${Date.now()}.csv`;
     a.click();
+}
+
+function enableEdit(index) {
+    if (currentData[index]) {
+        currentData[index]._isEditing = true;
+        renderTable(currentData);
+        // Focus logic could be added here but simple render is enough
+    }
+}
+
+function cancelEdit(index) {
+    if (currentData[index]) {
+        currentData[index]._isEditing = false;
+        renderTable(currentData);
+    }
+}
+
+function updateSector(index, newValue) {
+    if (currentData[index]) {
+        currentData[index]["Secteur"] = newValue;
+        currentData[index]._isEditing = false; // Turn off edit mode
+        // Refresh table to update icons and stats
+        renderTable(currentData);
+    }
 }

@@ -200,10 +200,11 @@ GLOBAL_OVERRIDES = {
     "VOLKSWAGEN": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "VOLKSWAGEN AG", "Adresse": "Wolfsburg (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
     # Consumer
-    "COCA COLA": {"Secteur": "Food / Beverages", "Nom Officiel": "THE COCA-COLA COMPANY", "Adresse": "Atlanta, GA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "PEPSI": {"Secteur": "Food / Beverages", "Nom Officiel": "PEPSICO INC.", "Adresse": "Harrison, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "SAMSUNG": {"Secteur": "Tech / Software", "Nom Officiel": "SAMSUNG ELECTRONICS", "Adresse": "Suwon (South Korea)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "NIKE": {"Secteur": "Retail", "Nom Officiel": "NIKE INC.", "Adresse": "Beaverton, OR (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "COCA COLA": {"Secteur": "Food / Beverages", "Nom Officiel": "THE COCA-COLA COMPANY", "Adresse": "Atlanta, GA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés", "Siren": None},
+    "DANONE": {"Secteur": "Food / Beverages", "Nom Officiel": "DANONE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Siren": "552032534"},
+    "PEPSI": {"Secteur": "Food / Beverages", "Nom Officiel": "PEPSICO INC.", "Adresse": "Harrison, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés", "Siren": None},
+    "SAMSUNG": {"Secteur": "Tech / Software", "Nom Officiel": "SAMSUNG ELECTRONICS", "Adresse": "Suwon (South Korea)", "Région": "Monde", "Effectif": "10 000+ salariés", "Siren": None},
+    "NIKE": {"Secteur": "Retail", "Nom Officiel": "NIKE INC.", "Adresse": "Beaverton, OR (USA)", "Région": "Monde", "Effectif": "10 000+ salariés", "Siren": None},
     
     # Smartphones / Tech Asia
     "XIAOMI": {"Secteur": "Tech / Software", "Nom Officiel": "XIAOMI CORP", "Adresse": "Beijing (China)", "Région": "Monde", "Effectif": "10 000+ salariés"},
@@ -260,12 +261,14 @@ NORMALIZED_OVERRIDES = {k.replace(" ", "").replace(".", "").replace("-", ""): k 
 
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
-    dept = zip_code[:2]
-    # Simplified map for major regions or using a dict
-    # For now, let's return Department number to be safe, or a few key ones.
-    # To do it properly, I'd need a huge dict. Let's try to get 'departement' name from API if possible?
-    # The API returns 'departement' object usually.
-    return f"Dept {dept}" # Placeholder, will try to fetch properly from API result
+    
+    # Handle DOM-TOM (3 digits) vs metro (2 digits)
+    if zip_code.startswith('97') or zip_code.startswith('98'):
+        dept = zip_code[:3]
+    else:
+        dept = zip_code[:2]
+
+    return DEPT_TO_REGION.get(dept, f"France ({dept})")
 
 # --- Helper Functions ---
 
@@ -362,11 +365,12 @@ def analyze_web_content(company_name):
     except Exception as e:
         return None, f"Error (Web): {str(e)}", 0, ""
 
+
 def categorize_company_logic(raw_input):
     try:
         company_name, is_valid = extract_company_from_input(raw_input)
         
-        # 1. Check Global Overrides (Simple & Fast)
+        # 1. Check Global Overrides (for SECTOR enforcing)
         upper_name = company_name.upper().strip()
         normalized_input = upper_name.replace(" ", "").replace(".", "").replace("-", "")
 
@@ -377,31 +381,20 @@ def categorize_company_logic(raw_input):
             real_key = NORMALIZED_OVERRIDES[normalized_input]
             target_override = GLOBAL_OVERRIDES[real_key]
             
-        if target_override:
-            ov = target_override
-            return {
-                "Input": raw_input,
-                "Nom Officiel": ov["Nom Officiel"],
-                "Secteur": ov["Secteur"],
-                "Détail": "Override Interne",
-                "Source": "Base Interne",
-                "Score": "100%",
-                "Adresse": ov.get("Adresse", "Non renseigné"),
-                "Région": ov.get("Région", "Non renseigné"),
-                "Lien": "#"
-            }
-
+        forced_sector = target_override.get("Secteur") if target_override else None
+        
         if not is_valid:
              return { "Input": raw_input, "Nom Officiel": "N/A", "Secteur": "N/A", "Détail": "Email Ignoré", "Source": "Filtre", "Score": "0", "Adresse": "-", "Région": "-", "Lien": "-" }
 
-        # 2. Call API
+        # 2. Call API (Try to get official SIREN/Identity even if we have an override)
+        # We search even if we have an override, to get the correct SIREN and Address.
         api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=5"
         
         naf_code = None
         official_name = company_name
         address = "Non renseigné"
         region = "Non renseigné"
-        link_url = "-"
+        link_url = ""
         
         search_success = False
 
@@ -418,7 +411,6 @@ def categorize_company_logic(raw_input):
                               best_res = res
                               break
                     
-                    # If all were committees, fallback to the first one (better than nothing) or keep searching
                     if not best_res: 
                          best_res = data['results'][0]
                     
@@ -436,32 +428,62 @@ def categorize_company_logic(raw_input):
                         # Simple Dept Fallback
                         cp = siege.get('code_postal', '')
                         if not region and cp:
-                             region = f"France ({cp[:2]})"
+                             region = get_region_from_dept(cp)
                         
                         siren = best_res.get('siren')
                         if siren: link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}"
         except Exception as e:
             print(f"API Call Error: {e}")
 
-        # 3. Determine Sector from API
-        if search_success and naf_code:
-            sector = get_sector_from_naf(naf_code)
-            if sector:
-                return {
-                    "Input": raw_input,
-                    "Nom Officiel": official_name,
-                    "Secteur": sector,
-                    "Détail": f"Code NAF: {naf_code}",
-                    "Source": "Officiel (API)",
-                    "Score": "100%",
-                    "Adresse": address,
-                    "Région": region,
-                    "Lien": link_url
-                }
+        # 3. Determine Final Result
+        # CAS A: API Found something
+        if search_success:
+            # If we had a forced sector from overrides, use it
+            final_sector = forced_sector if forced_sector else get_sector_from_naf(naf_code)
+            
+            # If still unknown sector, maybe fallback to web later? For now let's say API is authoritative for identity
+            if not final_sector: final_sector = "Unknown" # Or could chain to web search
+
+            return {
+                "Input": raw_input,
+                "Nom Officiel": official_name,
+                "Secteur": final_sector,
+                "Détail": "Override + API" if forced_sector else f"Code NAF: {naf_code}",
+                "Source": "Officiel (API)",
+                "Score": "100%",
+                "Adresse": address,
+                "Région": region,
+                "Lien": link_url
+            }
+            
+        # CAS B: API Failed but we have an Override
+        if target_override:
+             ov = target_override
+             # Check for manual siren
+             manual_link = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{ov['Siren']}" if ov.get('Siren') else f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={ov['Nom Officiel'].replace(' ', '+')}"
+             
+             return {
+                "Input": raw_input,
+                "Nom Officiel": ov["Nom Officiel"],
+                "Secteur": ov["Secteur"],
+                "Détail": "Override (API Echoit)",
+                "Source": "Base Interne",
+                "Score": "100%",
+                "Adresse": ov.get("Adresse", "Non renseigné"),
+                "Région": ov.get("Région", "Non renseigné"),
+                "Lien": manual_link
+            }
+
+        # 4. Fallback: Web Search (Simple)
 
         # 4. Fallback: Web Search (Simple)
         sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
         
+        final_link = link_url
+        if final_link == "-" or not final_link:
+             # Fallback to general search if no specific SIREN link found
+             final_link = f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={company_name.replace(' ', '+')}"
+
         if sector_web:
              return {
                 "Input": raw_input,
@@ -472,7 +494,7 @@ def categorize_company_logic(raw_input):
                 "Score": f"{score_web}",
                 "Adresse": address if address != "Non renseigné" else "International / Web",
                 "Région": region if region != "Non renseigné" else "Monde",
-                "Lien": link_url
+                "Lien": final_link
              }
 
         # 5. Nothing Found
@@ -501,7 +523,8 @@ def categorize_company_logic(raw_input):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    sectors_list = sorted(list(SECTOR_CONFIG.keys()))
+    return render_template('index.html', sectors=sectors_list)
 
 @app.route('/api/categorize', methods=['POST'])
 def api_categorize():
@@ -585,4 +608,4 @@ def api_batch():
         return jsonify({"error": f"Fatal Batch Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001, host='0.0.0.0')

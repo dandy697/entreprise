@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Company ClassifAI | Dashboard</title>
+    <title>Enrichissement Entreprise | Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,9 +14,15 @@
 
 <body>
 
-    <div class="background-orbs">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
+    <!-- No more Orbs -->
+    <script>
+        const ALL_SECTORS = {{ sectors | tojson }};
+    </script>
+
+
+
+    <div class="ambient-bg">
+        <div class="ambient-light"></div>
     </div>
 
     <div class="dashboard-container">
@@ -24,19 +30,19 @@
         <header class="main-header">
             <div class="logo">
                 <i class="fa-solid fa-rocket launch-icon"></i>
-                <h2>Company <span class="highlight">ClassifAI</span></h2>
+                <h2>Enrichissement <span class="highlight">Entreprise</span></h2>
             </div>
         </header>
 
-        <!-- SINGLE SEARCH HERO -->
-        <div class="glass-card search-hero">
-            <h3><i class="fa-solid fa-magnifying-glass"></i> Recherche Rapide</h3>
+        <!-- SINGLE SEARCH HERO (Portal) -->
+        <div class="glass-pane search-hero">
+            <h3><i class="fa-solid fa-bolt"></i> Recherche Rapide</h3>
             <div class="search-bar-wrapper">
                 <input type="text" id="singleInput"
                     placeholder="Entrez un nom d'entreprise ou un email (ex: LVMH, contact@keyrus.com)..."
                     autocomplete="off">
                 <button id="singleSearchBtn" onclick="performSingleSearch()">
-                    <i class="fa-solid fa-arrow-right"></i>
+                    <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
             </div>
         </div>
@@ -44,39 +50,35 @@
         <!-- INPUT GRID -->
         <div class="input-grid">
             <!-- Card 1: Excel Upload -->
-            <div class="glass-card upload-card">
-                <h3><i class="fa-solid fa-file-excel"></i> Import Excel</h3>
+            <div class="glass-pane upload-card">
+                <h3><i class="fa-solid fa-file-excel"></i> Import de Données</h3>
                 <div class="drag-drop-zone" id="dropZone">
                     <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                    <p>Cliquez ou glissez-déposez</p>
-                    <small>Fichier Excel (.xlsx, .xls) ou CSV. 1ère colonne lue.</small>
+                    <p>Déposez votre fichier Excel</p>
+                    <small>Formats .xlsx ou .csv supportés</small>
                     <input type="file" id="fileInput" accept=".csv, .xlsx, .xls" hidden>
                 </div>
             </div>
 
             <!-- Card 2: Manual Paste -->
-            <div class="glass-card paste-card">
-                <h3><i class="fa-solid fa-paste"></i> Copier-Coller</h3>
-                <textarea id="pasteInput" placeholder="Collez vos emails ou noms d'entreprises (un par ligne)
-Ex:
-baptiste.benet@keyrus.com
-Keyrus
-contact@societe.fr"></textarea>
+            <div class="glass-pane paste-card">
+                <h3><i class="fa-solid fa-clipboard-list"></i> Copier Coller</h3>
+                <textarea id="pasteInput" placeholder="Collez vos emails ou noms d'entreprises ici...
+Un par ligne."></textarea>
                 <div class="card-actions">
                     <button class="action-btn" id="proccessPasteBtn" onclick="processPaste()">
-                        Enrichir les données
+                        Lancer l'enrichissement
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- RESULTS SECTION -->
-        <div class="results-section glass-card">
+        <div class="glass-pane results-section">
             <div class="results-header">
-                <h3>Résultats (<span id="countTotal">0</span> entreprise<span id="pluralTotal"></span>)</h3>
+                <h3>Résultats (<span id="countTotal">0</span>)</h3>
 
-                <div class="header-stats"
-                    style="display: flex; gap: 15px; align-items: center; margin-left: auto; margin-right: 20px;">
+                <div class="header-stats">
                     <div class="stat-badge success">
                         <i class="fa-solid fa-check"></i> <span id="statFound">0</span>
                     </div>
@@ -88,8 +90,8 @@ contact@societe.fr"></textarea>
                     </div>
                 </div>
 
-                <button class="action-btn success" onclick="downloadExcel()">
-                    <i class="fa-solid fa-file-export"></i> Excel
+                <button class="action-btn" onclick="downloadExcel()">
+                    <i class="fa-solid fa-download"></i> Export Excel
                 </button>
             </div>
 
@@ -99,9 +101,9 @@ contact@societe.fr"></textarea>
                         <tr>
                             <th>Statut</th>
                             <th>Entrée</th>
-                            <th>Nom Entreprise</th>
-                            <th>Industrie</th>
-                            <th>Adresse</th>
+                            <th>Nom Officiel</th>
+                            <th>Secteur / Industrie</th>
+                            <th>Siège Social</th>
                             <th>Région</th>
                             <th>Lien Annuaire</th>
                         </tr>
@@ -111,7 +113,7 @@ contact@societe.fr"></textarea>
                     </tbody>
                 </table>
                 <div id="emptyState" class="empty-state-message">
-                    Aucune donnée. Importez un fichier ou collez une liste pour commencer.
+                    En attente de données...
                 </div>
             </div>
 
