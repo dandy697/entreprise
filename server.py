@@ -414,6 +414,8 @@ def categorize_company_logic(raw_input):
         headcount = "Non renseigné"
         slug = ""
         link_url = "" # init to empty string
+        best_result = {}
+        siege = {}
 
         try:
             response = requests.get(api_url)
