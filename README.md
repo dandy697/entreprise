@@ -11,6 +11,9 @@ A premium Flask web application that categorizes companies into sectors using a 
 ## Deployment
 Hosted on Vercel with Flask backend.
 
+### Analytics
+This project includes Vercel Web Analytics integration to track user activity and page views. For setup and configuration details, see [VERCEL_ANALYTICS_GUIDE.md](./VERCEL_ANALYTICS_GUIDE.md).
+
 ## Local Run
 ```bash
 pip install -r requirements.txt
