@@ -211,6 +211,7 @@ GLOBAL_OVERRIDES = {
     "SAFRAN AERO BOOSTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"},
     "SAFRAN AERO BOSOTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"},
     "SERFIGROUP": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
+    "SERFI GROUP": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
     "SERFI INTERNATIONAL": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"}
 }
 
