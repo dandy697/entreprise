@@ -433,16 +433,12 @@ def categorize_company_logic(raw_input):
                 # If API gives "Agriculture", "Construction", "Hotels" or "Consulting" (common for small local companies with big names)
                 # We double check with Web Analysis to see if it's actually a Global Brand
                 
-                is_suspicious_sector = sector_naf in [
-                    "Agriculture / Livestock / Seafood", 
-                    "Construction / Real Estate", 
-                    "Agri-food / Beverages",
-                    "Hotels / Restaurants",
-                    "Consulting / IT Services",
-                    "Not For Profit",
-                    "Retail",
-                    "Transportation, Logistics & Storage"
-                ]
+                # --- SYSTEMATIC WEB VERIFICATION (User Request) ---
+                # We now check everything (except obviously safe things like Gov) because DuckDuckGo is free/fast.
+                # This catches "Zoom = Association" or "Adobe = Construction" automatically.
+                
+                is_safe_sector = sector_naf in ["Public administration & government"]
+                is_suspicious_sector = not is_safe_sector  # CHECK EVERYTHING ELSE
                 
                 if is_suspicious_sector:
                      # Check the web
