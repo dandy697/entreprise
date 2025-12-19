@@ -333,9 +333,7 @@ def analyze_web_content(company_name):
         except Exception as e:
             print(f"DDG Lib Error: {e}")
             
-    except Exception as e:
-        print(f"Web Search General Error: {e}")
-            
+
         if not snippet_text:
             return None, "URL not found", 0, ""
 
