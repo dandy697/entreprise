@@ -212,7 +212,13 @@ GLOBAL_OVERRIDES = {
     "SAFRAN AERO BOSOTERS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "SAFRAN AERO BOOSTERS", "Adresse": "Herstal (Belgium)", "Région": "Monde", "Effectif": "1 000+ salariés"},
     "SERFIGROUP": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
     "SERFI GROUP": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
-    "SERFI INTERNATIONAL": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"}
+    "SERFI INTERNATIONAL": {"Secteur": "Retail", "Nom Officiel": "SERFI INTERNATIONAL", "Adresse": "Nice (France)", "Région": "Provence-Alpes-Côte d'Azur", "Effectif": "20-49 salariés"},
+    
+    # International Tech / Electronics (Added for safety)
+    "ADOBE": {"Secteur": "Tech / Software", "Nom Officiel": "ADOBE INC.", "Adresse": "San Jose, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "NINTENDO": {"Secteur": "Entertainment / Media", "Nom Officiel": "NINTENDO CO., LTD", "Adresse": "Kyoto (Japan)", "Région": "Monde", "Effectif": "5 000+ salariés"},
+    "PHILIPS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "KONINKLIJKE PHILIPS", "Adresse": "Amsterdam (Netherlands)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "SALESFORCE": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"}
 }
 
 def get_region_from_dept(zip_code):
