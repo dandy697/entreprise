@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enrichissement Entreprise | Dashboard</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -17,6 +18,7 @@
     <!-- No more Orbs -->
     <script>
         const ALL_SECTORS = {{ sectors | tojson }};
+        const CUSTOM_SECTORS = {{ custom_sectors | tojson }};
     </script>
 
 
@@ -117,6 +119,18 @@ Un par ligne."></textarea>
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="confirmModal" class="modal-backdrop" style="display: none;">
+        <div class="modal-content">
+            <h3 id="confirmTitle">Confirmation</h3>
+            <p id="confirmMessage">Voulez-vous vraiment continuer ?</p>
+            <div class="modal-actions">
+                <button id="btnCancel" class="btn-secondary">Annuler</button>
+                <button id="btnConfirm" class="btn-danger">Supprimer</button>
+            </div>
         </div>
     </div>
 

@@ -8,10 +8,62 @@ import time
 import re
 from urllib.parse import urlparse
 
+import json
+import os
+
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
 # --- Configuration ---
+CORRECTIONS_FILE = "corrections.json"
+USER_CORRECTIONS = {}
+
+def load_corrections():
+    global USER_CORRECTIONS
+    if os.path.exists(CORRECTIONS_FILE):
+        try:
+            with open(CORRECTIONS_FILE, 'r', encoding='utf-8') as f:
+                USER_CORRECTIONS = json.load(f)
+        except:
+            USER_CORRECTIONS = {}
+
+def save_correction(name, sector):
+    global USER_CORRECTIONS
+    # Normalize key: uppercase without spaces/special chars for robust matching
+    key = name.upper().strip()
+    USER_CORRECTIONS[key] = sector
+    try:
+        with open(CORRECTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(USER_CORRECTIONS, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error saving correction: {e}")
+
+# Load on startup
+load_corrections()
+
+# --- Custom Sectors Configuration ---
+CUSTOM_SECTORS_FILE = "custom_sectors.json"
+CUSTOM_SECTORS = []
+
+def load_custom_sectors():
+    global CUSTOM_SECTORS
+    if os.path.exists(CUSTOM_SECTORS_FILE):
+        try:
+            with open(CUSTOM_SECTORS_FILE, 'r', encoding='utf-8') as f:
+                CUSTOM_SECTORS = json.load(f)
+        except:
+            CUSTOM_SECTORS = []
+
+def save_custom_sectors():
+    try:
+        with open(CUSTOM_SECTORS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(CUSTOM_SECTORS, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"Error saving custom sectors: {e}")
+
+load_custom_sectors()
+
+# --- Comprehensive Region Mapping (The Trap Anti-Fail) ---
 # --- Comprehensive Region Mapping (The Trap Anti-Fail) ---
 DEPT_TO_REGION = {
     "01": "Auvergne-Rhône-Alpes", "02": "Hauts-de-France", "03": "Auvergne-Rhône-Alpes", "04": "Provence-Alpes-Côte d'Azur", "05": "Provence-Alpes-Côte d'Azur",
@@ -117,6 +169,10 @@ SECTOR_CONFIG = {
         "naf_prefixes": ["45", "46", "47"],
         "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "shopping", "mall", "outlet", "franchise", "carrefour", "auchan", "leclerc", "decathlon", "fnac", "darty", "amazon", "cdiscount"]
     },
+    "HR / Recruitment / Interim": {
+        "naf_prefixes": ["78"],
+        "keywords": ["intérim", "recrutement", "rh", "ressources humaines", "agence d'emploi", "staffing", "recruitment", "chasseur de tête", "talent", "manpower", "adecco", "randstad", "crit", "synergie", "proman"]
+    },
     "Tech / Software": {
         "naf_prefixes": ["582", "6201", "6312", "262"],
         "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "start-up", "google", "microsoft", "apple", "meta", "aws", "salesforce", "sap", "oracle"]
@@ -166,15 +222,34 @@ GLOBAL_OVERRIDES = {
     "HERMES": {"Secteur": "Luxury", "Nom Officiel": "HERMES INTERNATIONAL", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "GUCCI": {"Secteur": "Luxury", "Nom Officiel": "GUCCI", "Adresse": "Florence (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "PRADA": {"Secteur": "Luxury", "Nom Officiel": "PRADA SPA", "Adresse": "Milan (Italy)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "SFR": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "SFR", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "FREE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "ILIAD": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "BOUYGUES": {"Secteur": "Construction", "Nom Officiel": "BOUYGUES SA", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "BOUYGUES TELECOM": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "BOUYGUES TELECOM", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    
+    # Transport
+    "SNCF": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "SNCF", "Adresse": "Saint-Denis (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/552049447"},
+    "RATP": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "REGIE AUTONOME DES TRANSPORTS PARISIENS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/775663438"},
+    "LA POSTE": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "LA POSTE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/356000000"},
+    "GROUPE LA POSTE": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "LA POSTE", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"}, # Keep existing entry
+    "AIR FRANCE": {"Secteur": "Transportation, Logistics & Storage", "Nom Officiel": "AIR FRANCE", "Adresse": "Tremblay-en-France (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/420495178"},
+
+    # Bank / Finance
+    "BNP": {"Secteur": "Banking", "Nom Officiel": "BNP PARIBAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/662042449"},
+    "BNP PARIBAS": {"Secteur": "Banking", "Nom Officiel": "BNP PARIBAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/662042449"},
+    "SOCIETE GENERALE": {"Secteur": "Banking", "Nom Officiel": "SOCIETE GENERALE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/552120222"},
+    "CREDIT AGRICOLE": {"Secteur": "Banking", "Nom Officiel": "CREDIT AGRICOLE SA", "Adresse": "Montrouge (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/784608416"},
+
+    # Energy
+    "TOTALENERGIES": {"Secteur": "Energy / Utilities", "Nom Officiel": "TOTALENERGIES SE", "Adresse": "Courbevoie (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/542051180"},
+    "ENGIE": {"Secteur": "Energy / Utilities", "Nom Officiel": "ENGIE", "Adresse": "Courbevoie (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/542107651"},
+    "EDF": {"Secteur": "Energy / Utilities", "Nom Officiel": "ELECTRICITE DE FRANCE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/552081317"},
+    
+    # Telecom
+    "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/380129866"},
+    "SFR": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "SFR", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/343059564"},
+    "FREE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/421938861"},
+    "ILIAD": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"}, # Keep existing entry
+    "BOUYGUES TELECOM": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "BOUYGUES TELECOM", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/397480936"},
     
     # Consulting (Added due to user feedback)
-    "CAPGEMINI": {"Secteur": "Consulting / IT Services", "Nom Officiel": "CAPGEMINI SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CAPGEMINI": {"Secteur": "Consulting / IT Services", "Nom Officiel": "CAPGEMINI SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/330703844"},
     "KPMG": {"Secteur": "Consulting / IT Services", "Nom Officiel": "KPMG S.A", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "DELOITTE": {"Secteur": "Consulting / IT Services", "Nom Officiel": "DELOITTE SAS", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "EY": {"Secteur": "Consulting / IT Services", "Nom Officiel": "ERNST & YOUNG", "Adresse": "Paris La Défense (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
@@ -259,6 +334,13 @@ GLOBAL_OVERRIDES = {
 # Maps "COCACOLA" -> "COCA COLA", "LVMH" -> "LVMH", "AIRBNB" -> "AIRBNB"
 NORMALIZED_OVERRIDES = {k.replace(" ", "").replace(".", "").replace("-", ""): k for k in GLOBAL_OVERRIDES}
 
+# Explicit Typos / Variations Mapping (Normalized -> Real Key)
+NORMALIZED_OVERRIDES["BNBPARIBAS"] = "BNP PARIBAS"
+NORMALIZED_OVERRIDES["BNB"] = "BNP PARIBAS"
+NORMALIZED_OVERRIDES["BNPPARIBAS"] = "BNP PARIBAS"
+NORMALIZED_OVERRIDES["BNP-PARIBAS"] = "BNP PARIBAS"
+NORMALIZED_OVERRIDES["FREEPRO"] = "FREE"
+
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
     
@@ -330,6 +412,7 @@ def analyze_web_content(company_name):
         try:
             # Local import to prevent module-level crash if library is missing/incompatible
             from duckduckgo_search import DDGS
+            query = f"{company_name} societe.com France"
             with DDGS() as ddgs:
                  # limit=1
                  results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
@@ -369,25 +452,50 @@ def analyze_web_content(company_name):
 def categorize_company_logic(raw_input):
     try:
         company_name, is_valid = extract_company_from_input(raw_input)
-        
-        # 1. Check Global Overrides (for SECTOR enforcing)
-        upper_name = company_name.upper().strip()
-        normalized_input = upper_name.replace(" ", "").replace(".", "").replace("-", "")
-
-        target_override = None
-        if upper_name in GLOBAL_OVERRIDES:
-            target_override = GLOBAL_OVERRIDES[upper_name]
-        elif normalized_input in NORMALIZED_OVERRIDES:
-            real_key = NORMALIZED_OVERRIDES[normalized_input]
-            target_override = GLOBAL_OVERRIDES[real_key]
-            
-        forced_sector = target_override.get("Secteur") if target_override else None
-        
         if not is_valid:
-             return { "Input": raw_input, "Nom Officiel": "N/A", "Secteur": "N/A", "Détail": "Email Ignoré", "Source": "Filtre", "Score": "0", "Adresse": "-", "Région": "-", "Lien": "-" }
+            return {"Input": raw_input, "Nom Officiel": "Ignoré", "Secteur": "Hors Scope", "Détail": "Email perso / invalide", "Source": "-", "Score": "0", "Adresse": "-", "Région": "-", "Lien": "-"}
 
-        # 2. Call API (Try to get official SIREN/Identity even if we have an override)
-        # We search even if we have an override, to get the correct SIREN and Address.
+        # 0. Check User Corrections (Case Insensitive)
+        # Key in JSON is UPPERCASE.
+        upper_name_clean = company_name.upper().strip()
+        
+        custom_sector = USER_CORRECTIONS.get(upper_name_clean)
+        forced_sector = None
+        
+        if custom_sector:
+            forced_sector = custom_sector
+        
+        # 1. Check Global Overrides
+        target_override = None
+        # Try finding override by clean uppercase name
+        if upper_name_clean in NORMALIZED_OVERRIDES:
+             mapped_key = NORMALIZED_OVERRIDES[upper_name_clean]
+             target_override = GLOBAL_OVERRIDES.get(mapped_key)
+        elif upper_name_clean in GLOBAL_OVERRIDES:
+             target_override = GLOBAL_OVERRIDES[upper_name_clean]
+        
+        # If Override provides explicit address, RETURN IMMEDIATELY (Skip API)
+        if target_override and target_override.get("Adresse"):
+             manual_link = target_override.get("Lien") 
+             if not manual_link:
+                  manual_link = f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={target_override['Nom Officiel'].replace(' ', '+')}"
+             
+             final_sect = forced_sector if forced_sector else target_override["Secteur"]
+             
+             return {
+                "Input": raw_input,
+                "Nom Officiel": target_override["Nom Officiel"],
+                "Secteur": final_sect,
+                "Détail": "Override Global (Hardcoded)",
+                "Source": "Base Interne",
+                "Score": "100%",
+                "Adresse": target_override["Adresse"],
+                "Région": target_override["Région"],
+                "Effectif": target_override.get("Effectif", "Non renseigné"),
+                "Lien": manual_link
+             }
+
+        # 2. Call API
         api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=5"
         
         naf_code = None
@@ -411,21 +519,19 @@ def categorize_company_logic(raw_input):
                               best_res = res
                               break
                     
-                    if not best_res: 
-                         best_res = data['results'][0]
+                    if not best_res: best_res = data['results'][0]
                     
                     if best_res:
                         search_success = True
                         naf_code = best_res.get('activite_principale')
                         official_name = best_res.get('nom_complet')
                         
-                        # Address / Region
                         siege = best_res.get('siege', {})
                         address = siege.get('adresse', best_res.get('adresse', ''))
                         region = siege.get('libelle_region', '')
                         if not region: region = best_res.get('region', '')
                         
-                        # Simple Dept Fallback
+                        # Fallback Region from Dept
                         cp = siege.get('code_postal', '')
                         if not region and cp:
                              region = get_region_from_dept(cp)
@@ -436,13 +542,15 @@ def categorize_company_logic(raw_input):
             print(f"API Call Error: {e}")
 
         # 3. Determine Final Result
-        # CAS A: API Found something
         if search_success:
             # If we had a forced sector from overrides, use it
             final_sector = forced_sector if forced_sector else get_sector_from_naf(naf_code)
             
-            # If still unknown sector, maybe fallback to web later? For now let's say API is authoritative for identity
-            if not final_sector: final_sector = "Unknown" # Or could chain to web search
+            # If still unknown sector, use partial override if exists
+            if not final_sector and target_override:
+                final_sector = target_override.get("Secteur", "Unknown")
+            
+            if not final_sector: final_sector = "Unknown"
 
             return {
                 "Input": raw_input,
@@ -456,32 +564,25 @@ def categorize_company_logic(raw_input):
                 "Lien": link_url
             }
             
-        # CAS B: API Failed but we have an Override
-        if target_override:
-             ov = target_override
-             # Check for manual siren
-             manual_link = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{ov['Siren']}" if ov.get('Siren') else f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={ov['Nom Officiel'].replace(' ', '+')}"
-             
+        # 4. Fallback: Web Search
+        # If API failed, but we have a partial override (without address), usually we returned above?
+        # But if we are here, we have neither robust API result nor specific override address.
+        # Check overrides one last time for sector only?
+        if forced_sector:
              return {
                 "Input": raw_input,
-                "Nom Officiel": ov["Nom Officiel"],
-                "Secteur": ov["Secteur"],
-                "Détail": "Override (API Echoit)",
-                "Source": "Base Interne",
+                "Nom Officiel": company_name,
+                "Secteur": forced_sector,
+                "Détail": "Correction Utilisateur (Sans Info)",
+                "Source": "Mémoire",
                 "Score": "100%",
-                "Adresse": ov.get("Adresse", "Non renseigné"),
-                "Région": ov.get("Région", "Non renseigné"),
-                "Lien": manual_link
-            }
-
-        # 4. Fallback: Web Search (Simple)
-
-        # 4. Fallback: Web Search (Simple)
+                "Adresse": "-", "Région": "-", "Lien": "-"
+             }
+             
         sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
         
         final_link = link_url
         if final_link == "-" or not final_link:
-             # Fallback to general search if no specific SIREN link found
              final_link = f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={company_name.replace(' ', '+')}"
 
         if sector_web:
@@ -523,8 +624,9 @@ def categorize_company_logic(raw_input):
 
 @app.route('/')
 def index():
-    sectors_list = sorted(list(SECTOR_CONFIG.keys()))
-    return render_template('index.html', sectors=sectors_list)
+    # Combine standard + custom sectors
+    all_sectors = sorted(list(SECTOR_CONFIG.keys()) + CUSTOM_SECTORS)
+    return render_template('index.html', sectors=all_sectors, custom_sectors=CUSTOM_SECTORS)
 
 @app.route('/api/categorize', methods=['POST'])
 def api_categorize():
@@ -535,6 +637,39 @@ def api_categorize():
     
     result = categorize_company_logic(company_input)
     return jsonify(result)
+
+@app.route('/api/override', methods=['POST'])
+def override_sector():
+    data = request.json
+    name = data.get('name')
+    sector = data.get('sector')
+    
+    if name and sector:
+        # Save the correction using the EXTRACTED/NORMALIZED name as the key (UPPERCASE)
+        # This ensures that future searches (which also use the extracted name) find the correction.
+        # Example: Input "dlv@foo.com" -> Extracted "foo". Saving "FOO": "Sector" fixes "contact@foo.com" too.
+        normalized_name, _ = extract_company_from_input(name)
+        save_correction(normalized_name.upper(), sector)
+        
+        # Determine if it's a new custom sector
+        standard_sectors = list(SECTOR_CONFIG.keys())
+        if sector not in standard_sectors and sector not in CUSTOM_SECTORS:
+            CUSTOM_SECTORS.append(sector)
+            save_custom_sectors()
+            
+        return jsonify({"status": "success", "sector": sector, "is_new": sector in CUSTOM_SECTORS})
+    return jsonify({"error": "Missing data"}), 400
+
+@app.route('/api/delete_sector', methods=['POST'])
+def delete_sector():
+    data = request.json
+    sector = data.get('sector')
+    
+    if sector in CUSTOM_SECTORS:
+        CUSTOM_SECTORS.remove(sector)
+        save_custom_sectors()
+        return jsonify({"status": "success", "message": "Sector deleted"})
+    return jsonify({"error": "Sector not found or cannot delete standard sector"}), 400
 
 @app.route('/api/upload', methods=['POST'])
 def api_upload():

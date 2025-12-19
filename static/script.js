@@ -16,9 +16,24 @@ dropZone.addEventListener('drop', (e) => {
     e.preventDefault();
     dropZone.classList.remove('dragover');
     if (e.dataTransfer.files.length) {
-        handleFile(e.dataTransfer.files[0]);
     }
 });
+
+// Helper for switching to custom input
+window.switchToInput = function (index) {
+    const container = document.getElementById(`sector-container-${index}`);
+    // Replace with input
+    // Replace with input
+    container.innerHTML = `
+        <input type="text" class="sector-input" 
+        value="" placeholder="Saisissez le secteur..." 
+        onchange="updateSector(${index}, this.value)" 
+        onkeydown="if(event.key === 'Enter') this.blur()" autofocus>
+        <button class="cancel-btn" onclick="cancelEdit(${index})" title="Annuler"><i class="fa-solid fa-xmark"></i></button>
+    `;
+    container.querySelector('input').focus();
+};
+
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length) handleFile(e.target.files[0]);
 });
@@ -85,8 +100,15 @@ document.getElementById('singleInput').addEventListener('keypress', (e) => {
 
 async function processPaste() {
     const text = document.getElementById('pasteInput').value;
-    const lines = text.split('\n').filter(l => l.trim());
-    if (!lines.length) return;
+    const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        // Filter out navigation artifacts (common copy-paste junk)
+        .filter(l => !l.toLowerCase().includes("voir fiche"))
+        .filter(l => !l.toLowerCase().includes("page suivante"))
+        .filter(l => !l.toLowerCase().includes("page précédente"));
+
+    if (lines.length === 0) return;
 
     const btn = document.getElementById('proccessPasteBtn');
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
@@ -148,9 +170,11 @@ function renderTable(data, prepend = false) {
         let statusIcon = '<i class="fa-solid fa-circle-check status-icon success"></i>';
 
         if (row["Secteur"].includes("Erreur") || row["Secteur"] === "Error") {
-            statusIcon = '<i class="fa-solid fa-circle-xmark status-icon error"></i>';
+            statusIcon = '<i class="fa-solid fa-circle-xmark status-icon error" style="color: var(--error);"></i>';
         } else if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") {
-            statusIcon = '<i class="fa-solid fa-circle-exclamation status-icon warning"></i>';
+            statusIcon = '<i class="fa-solid fa-circle-exclamation status-icon warning" style="color: var(--warning);"></i>';
+        } else {
+            statusIcon = '<i class="fa-solid fa-circle-check status-icon success" style="color: var(--success);"></i>';
         }
 
         const sector = row["Secteur"] === "Unknown" ? "Non Trouvé" : row["Secteur"];
@@ -165,19 +189,37 @@ function renderTable(data, prepend = false) {
         // Edit Mode Logic
         let sectorDisplay;
         if (row._isEditing) {
-            // Dropdown Generation
-            let sectorSelect = `<select class="sector-select" onchange="updateSector(${index}, this.value)" onblur="cancelEdit(${index})">`;
+            // Dropdown logic
+            const isCustom = typeof CUSTOM_SECTORS !== 'undefined' && CUSTOM_SECTORS.includes(sector);
+
+            let sectorSelect = `<div id="sector-container-${index}" class="edit-container" style="width:100%">
+                <select class="sector-select" onchange="if(this.value === 'CUSTOM') { switchToInput(${index}); } else { updateSector(${index}, this.value); }">`;
+
             let currentInList = false;
             ALL_SECTORS.forEach(s => {
                 const selected = s === row["Secteur"] ? "selected" : "";
                 if (selected) currentInList = true;
                 sectorSelect += `<option value="${s}" ${selected}>${s}</option>`;
             });
+
+            // If currently showing a custom value NOT in list (shouldn't happen if persisted, but safety)
             if (!currentInList) {
-                sectorSelect += `<option value="${row["Secteur"]}" selected>${sector}</option>`;
+                sectorSelect += `<option value="${row["Secteur"]}" selected>${row["Secteur"]}</option>`;
             }
+
+            sectorSelect += `<option value="CUSTOM" style="font-weight:bold; color:var(--primary-color);">✍️ Autre / Saisie libre...</option>`;
             sectorSelect += `</select>`;
+
+            // Buttons: Delete (if custom) OR Cancel
+            if (isCustom) {
+                const safeSector = sector.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                sectorSelect += `<button class="delete-btn" onclick="event.stopPropagation(); deleteCustomSector('${safeSector}')" title="Supprimer ce secteur"><i class="fa-solid fa-trash"></i></button>`;
+            }
+            sectorSelect += `<button class="cancel-btn" onclick="cancelEdit(${index})" title="Annuler"><i class="fa-solid fa-xmark"></i></button>`;
+            sectorSelect += `</div>`;
+
             sectorDisplay = sectorSelect;
+
         } else {
             // Text + Pencil
             sectorDisplay = `<div class="industry-wrapper"><span class="industry-badge">${sector}</span> <i class="fa-solid fa-pen edit-icon" onclick="enableEdit(${index})"></i></div>`;
@@ -235,26 +277,104 @@ function downloadExcel() {
     a.click();
 }
 
-function enableEdit(index) {
-    if (currentData[index]) {
-        currentData[index]._isEditing = true;
-        renderTable(currentData);
-        // Focus logic could be added here but simple render is enough
+async function updateSector(index, newSector) {
+    if (!newSector) return;
+
+    // Optimistic Update
+    const companyName = currentData[index]["Input"];
+    currentData[index]["Secteur"] = newSector;
+    currentData[index]._isEditing = false;
+    renderTable(currentData);
+
+    try {
+        const response = await fetch(`${API_URL}/override`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: companyName, sector: newSector })
+        });
+        const res = await response.json();
+
+        // Update Local Lists if New
+        if (res.is_new) {
+            if (!ALL_SECTORS.includes(newSector)) ALL_SECTORS.push(newSector);
+            if (typeof CUSTOM_SECTORS !== 'undefined' && !CUSTOM_SECTORS.includes(newSector)) CUSTOM_SECTORS.push(newSector);
+            ALL_SECTORS.sort();
+        }
+
+    } catch (e) {
+        console.error("Save failed", e);
+        // Ideally revert UI here
     }
+}
+
+async function deleteCustomSector(sectorName) {
+    // Custom Modal Confirmation
+    showConfirm(
+        "Suppression",
+        `Voulez-vous vraiment supprimer le secteur "${sectorName}" de la liste ?`,
+        async () => {
+            try {
+                const response = await fetch(`${API_URL}/delete_sector`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sector: sectorName })
+                });
+
+                if (response.ok) {
+                    const aidx = ALL_SECTORS.indexOf(sectorName);
+                    if (aidx > -1) ALL_SECTORS.splice(aidx, 1);
+
+                    const cidx = CUSTOM_SECTORS.indexOf(sectorName);
+                    if (cidx > -1) CUSTOM_SECTORS.splice(cidx, 1);
+
+                    renderTable(currentData);
+                } else {
+                    alert("Erreur serveur lors de la suppression");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erreur suppression");
+            }
+        }
+    );
+}
+
+// --- Custom Modal Logic ---
+function showConfirm(title, message, onConfirm) {
+    const modal = document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').innerText = title;
+    document.getElementById('confirmMessage').innerText = message;
+
+    // Reset Buttons (Clone to remove listeners)
+    const oldConfirm = document.getElementById('btnConfirm');
+    const newConfirm = oldConfirm.cloneNode(true);
+    oldConfirm.parentNode.replaceChild(newConfirm, oldConfirm);
+
+    const oldCancel = document.getElementById('btnCancel');
+    const newCancel = oldCancel.cloneNode(true);
+    oldCancel.parentNode.replaceChild(newCancel, oldCancel);
+
+    // Bind
+    newConfirm.onclick = () => {
+        onConfirm();
+        modal.style.display = 'none';
+    };
+    newCancel.onclick = () => {
+        modal.style.display = 'none';
+    };
+
+    modal.style.display = 'flex';
+}
+
+// Expose to window for inline onclick
+window.deleteCustomSector = deleteCustomSector;
+
+function enableEdit(index) {
+    currentData[index]._isEditing = true;
+    renderTable(currentData);
 }
 
 function cancelEdit(index) {
-    if (currentData[index]) {
-        currentData[index]._isEditing = false;
-        renderTable(currentData);
-    }
-}
-
-function updateSector(index, newValue) {
-    if (currentData[index]) {
-        currentData[index]["Secteur"] = newValue;
-        currentData[index]._isEditing = false; // Turn off edit mode
-        // Refresh table to update icons and stats
-        renderTable(currentData);
-    }
+    currentData[index]._isEditing = false;
+    renderTable(currentData);
 }
