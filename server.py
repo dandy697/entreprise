@@ -151,11 +151,7 @@ TRANCHE_EFFECTIFS = {
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
     dept = zip_code[:2]
-    # Simplified map for major regions or using a dict
-    # For now, let's return Department number to be safe, or a few key ones.
-    # To do it properly, I'd need a huge dict. Let's try to get 'departement' name from API if possible?
-    # The API returns 'departement' object usually.
-    return f"Dept {dept}" # Placeholder, will try to fetch properly from API result
+    return f"Dept {dept}" 
 
 # --- Helper Functions ---
 
@@ -258,7 +254,6 @@ def categorize_company_logic(raw_input):
         company_name, is_valid = extract_company_from_input(raw_input)
         
         # REMOVED: Static Global Overrides (User requested dynamic Web Search only)
-        # The logic will now proceed to API -> Web Fallback for everyone.
         
         if not is_valid:
             return {
@@ -275,142 +270,135 @@ def categorize_company_logic(raw_input):
         
         api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=3"
     
-    naf_code = None
-    naf_label = ""
-    official_name = company_name
-    address = "Non renseigné"
-    region = "Non renseigné"
-    headcount = "Non renseigné"
-    slug = ""
+        naf_code = None
+        naf_label = ""
+        official_name = company_name
+        address = "Non renseigné"
+        region = "Non renseigné"
+        headcount = "Non renseigné"
+        slug = ""
+        link_url = ""
+
+        try:
+            response = requests.get(api_url)
+            if response.status_code == 200:
+                data = response.json()
+                if data and data['results']:
+                    best_result = None
+                    for res in data['results']:
+                        name_check = res.get('nom_complet', '').upper()
+                        if "COMITE" not in name_check and "CSE" not in name_check and "INDIVISION" not in name_check:
+                             best_result = res
+                             break
+                    
+                    if not best_result:
+                        best_result = data['results'][0]
     
-    try:
-        response = requests.get(api_url)
-        if response.status_code == 200:
-            data = response.json()
-            if data and data['results']:
-                best_result = None
-                for res in data['results']:
-                    name_check = res.get('nom_complet', '').upper()
-                    if "COMITE" not in name_check and "CSE" not in name_check and "INDIVISION" not in name_check:
-                         best_result = res
-                         break
+                    naf_code = best_result.get('activite_principale', '')
+                    naf_label = best_result.get('libelle_activite_principale', '')
+                    official_name = best_result.get('nom_complet', company_name)
+                    
+                    # Extra Data
+                    siege = best_result.get('siege', {})
+                    address = siege.get('adresse', best_result.get('adresse', ''))
+                    
+                    # Region logic
+                    cp = siege.get('code_postal', '')
+                    city = siege.get('libelle_commune', '')
+                    
+                    # Priority: Siege Region Name > Root Region > CP Inference
+                    region = siege.get('libelle_region') or best_result.get('region') or ""
+                    
+                    if not region and cp:
+                         if cp.startswith('75') or cp.startswith('92') or cp.startswith('93') or cp.startswith('94') or cp.startswith('78') or cp.startswith('91') or cp.startswith('95') or cp.startswith('77'):
+                             region = "Île-de-France"
+                         else:
+                             region = f"{city} ({cp[:2]})"
+                    
+                    # Headcount - Check root then unite_legale
+                    tranche = best_result.get('tranche_effectifs')
+                    unite_legale = best_result.get('unite_legale') or {}
+                    
+                    if not tranche:
+                        tranche = unite_legale.get('tranche_effectifs')
+                    
+                    if not tranche: tranche = "NN"
+                    
+                    headcount = TRANCHE_EFFECTIFS.get(tranche, "Non renseigné")
+                    
+                    # Link - Use SIREN which is safer than slug
+                    siren = best_result.get('siren')
+                    if not siren:
+                         siren = unite_legale.get('siren')
+                         
+                    link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}" if siren else "#"
+    
+        except Exception as e:
+            print(f"API Error: {e}")
+    
+        result_base = {
+            "Input": raw_input,
+            "Nom Officiel": official_name,
+            "Adresse": address,
+            "Région": region,
+            "Lien": link_url
+        }
+    
+        if naf_code:
+            sector_naf = get_sector_from_naf(naf_code)
+            if sector_naf:
+                # --- SMART CONFLICT RESOLUTION ---
+                is_suspicious_sector = sector_naf in [
+                    "Agriculture / Livestock / Seafood", 
+                    "Construction / Real Estate", 
+                    "Agri-food / Beverages",
+                    "Hotels / Restaurants",
+                    "Consulting / IT Services"
+                ]
                 
-                if not best_result:
-                    best_result = data['results'][0]
-
-                naf_code = best_result.get('activite_principale', '')
-                naf_label = best_result.get('libelle_activite_principale', '')
-                official_name = best_result.get('nom_complet', company_name)
-                
-                # Extra Data
-                siege = best_result.get('siege', {})
-                address = siege.get('adresse', best_result.get('adresse', ''))
-                
-                # Region logic
-                cp = siege.get('code_postal', '')
-                city = siege.get('libelle_commune', '')
-                
-                # Priority: Siege Region Name > Root Region > CP Inference
-                region = siege.get('libelle_region') or best_result.get('region') or ""
-                
-                if not region and cp:
-                     if cp.startswith('75') or cp.startswith('92') or cp.startswith('93') or cp.startswith('94') or cp.startswith('78') or cp.startswith('91') or cp.startswith('95') or cp.startswith('77'):
-                         region = "Île-de-France"
-                     else:
-                         region = f"{city} ({cp[:2]})"
-                
-                # Headcount - Check root then unite_legale
-                tranche = best_result.get('tranche_effectifs')
-                unite_legale = best_result.get('unite_legale') or {}
-
-                if not tranche:
-                    tranche = unite_legale.get('tranche_effectifs')
-                
-                if not tranche: tranche = "NN"
-                
-                headcount = TRANCHE_EFFECTIFS.get(tranche, "Non renseigné")
-                
-                # Link - Use SIREN which is safer than slug
-                siren = best_result.get('siren')
-                if not siren:
-                     siren = unite_legale.get('siren')
+                if is_suspicious_sector:
+                     # Check the web
+                     sector_web, source_web, score_web = analyze_web_content(company_name)
                      
-                link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}" if siren else "#"
-
-    except Exception as e:
-        print(f"API Error: {e}")
-
-    result_base = {
-        "Input": raw_input,
-        "Nom Officiel": official_name,
-        "Adresse": address,
-        "Région": region,
-        "Lien": link_url
-    }
-
-    if naf_code:
-        sector_naf = get_sector_from_naf(naf_code)
-        if sector_naf:
-            # --- SMART CONFLICT RESOLUTION ---
-            # If API gives "Agriculture", "Construction", "Hotels" or "Consulting" (common for small local companies with big names)
-            # We double check with Web Analysis to see if it's actually a Global Brand
-            
-            is_suspicious_sector = sector_naf in [
-                "Agriculture / Livestock / Seafood", 
-                "Construction / Real Estate", 
-                "Agri-food / Beverages",
-                "Hotels / Restaurants",
-                "Consulting / IT Services"
-            ]
-            
-            if is_suspicious_sector:
-                 # Check the web
-                 sector_web, source_web, score_web = analyze_web_content(company_name)
-                 
-                 # If Web says "Tech" or "Retail" (and score is decent), we OVERRIDE the API.
-                 # Example: API says "Apple = Agriculture", Web says "Apple = Tech". We take Tech.
-                 if sector_web and sector_web != "Non Trouvé" and sector_web != sector_naf and score_web >= 2:
-                      address = "International / Web" # Override address too as it's likely wrong
-                      region = "Monde"
-                      return {
-                          **result_base,
-                          "Secteur": sector_web,
-                          "Détail": f"Web Override (was {sector_naf})", 
-                          "Source": f"{source_web}", 
-                          "Score": f"{score_web}",
-                          "Adresse": address,
-                          "Région": region,
-                          "Nom Officiel": company_name.upper()
-                      }
-            
-            # Debugging: If we stick with API, let's say what the web found
-            if is_suspicious_sector:
-                 web_msg = f"(Web saw: {sector_web} score {score_web})" if sector_web else "(Web Search Failed/Blocked)"
-                 return {
-                     **result_base, 
-                     "Secteur": sector_naf, 
-                     "Détail": f"NAF: {naf_code} {web_msg}", 
-                     "Source": "Officiel (Code NAF)", 
-                     "Score": "100%"
-                 }
-
-            return {**result_base, "Secteur": sector_naf, "Détail": f"NAF: {naf_code}", "Source": "Officiel (Code NAF)", "Score": "100%"}
-
-    if naf_label:
-        label_scores = score_text(naf_label, weights=5.0)
-        best_label_sector = max(label_scores, key=label_scores.get)
-        if label_scores[best_label_sector] > 0:
-             return {**result_base, "Secteur": best_label_sector, "Détail": f"NAF: {naf_code} (Label)", "Source": "Officiel (Label)", "Score": f"{label_scores[best_label_sector]}"}
-
-    # --- FALLBACK: WEB ANALYSIS (International / No SIRET) ---
-    sector_web, source_web, score_web = analyze_web_content(company_name)
+                     if sector_web and sector_web != "Non Trouvé" and sector_web != sector_naf and score_web >= 2:
+                          address = "International / Web" # Override address too as it's likely wrong
+                          region = "Monde"
+                          return {
+                              **result_base,
+                              "Secteur": sector_web,
+                              "Détail": f"Web Override (was {sector_naf})", 
+                              "Source": f"{source_web}", 
+                              "Score": f"{score_web}",
+                              "Adresse": address,
+                              "Région": region,
+                              "Nom Officiel": company_name.upper()
+                          }
+                
+                # Debugging
+                if is_suspicious_sector:
+                     web_msg = f"(Web saw: {sector_web} score {score_web})" if 'sector_web' in locals() and sector_web else "(Web Skip/Fail)"
+                     return {
+                         **result_base, 
+                         "Secteur": sector_naf, 
+                         "Détail": f"NAF: {naf_code} {web_msg}", 
+                         "Source": "Officiel (Code NAF)", 
+                         "Score": "100%"
+                     }
     
-    # If we are here, it means we didn't find a NAF code. 
-    # Likely international or just name match without NAF.
-    # Update visuals if they were "Non renseigné"
-    if address == "Non renseigné": address = "International / Web"
-    if region == "Non renseigné": region = "Monde"
+                return {**result_base, "Secteur": sector_naf, "Détail": f"NAF: {naf_code}", "Source": "Officiel (Code NAF)", "Score": "100%"}
     
+        if naf_label:
+            label_scores = score_text(naf_label, weights=5.0)
+            best_label_sector = max(label_scores, key=label_scores.get)
+            if label_scores[best_label_sector] > 0:
+                 return {**result_base, "Secteur": best_label_sector, "Détail": f"NAF: {naf_code} (Label)", "Source": "Officiel (Label)", "Score": f"{label_scores[best_label_sector]}"}
+    
+        # --- FALLBACK: WEB ANALYSIS ---
+        sector_web, source_web, score_web = analyze_web_content(company_name)
+        
+        if address == "Non renseigné": address = "International / Web"
+        if region == "Non renseigné": region = "Monde"
+        
         return {
             **result_base,
             "Nom Officiel": official_name if official_name != company_name else company_name,
@@ -421,9 +409,8 @@ def categorize_company_logic(raw_input):
             "Adresse": address,
             "Région": region
         }
-
+    
     except Exception as e:
-        # Catch-all to prevent "Erreur Interne" in batch from crashing the loop without details
         return {
             "Input": raw_input,
             "Nom Officiel": "Erreur",
@@ -471,9 +458,6 @@ def api_upload():
         else:
              return jsonify({"error": "Format non supporté (CSV ou Excel)"}), 400
              
-        # Process the list (same as batch)
-        # We can reuse the batch logic or return the list for the client to call batch?
-        # Let's return the processed results directly to be efficient.
         results = []
         for i, line in enumerate(inputs):
             if line.strip():
@@ -496,10 +480,9 @@ def api_batch():
         results = []
         
         for i, line in enumerate(inputs):
-            if not isinstance(line, str): line = str(line) # Safety cast
+            if not isinstance(line, str): line = str(line)
             
             if line.strip():
-                # Basic rate limiting for batch to avoid flooding Google if many requests
                 if i > 0: time.sleep(1.0)
                 try:
                     results.append(categorize_company_logic(line))
