@@ -368,12 +368,11 @@ def categorize_company_logic(raw_input):
                 # Region logic
                 cp = siege.get('code_postal', '')
                 city = siege.get('libelle_commune', '')
-                dept = siege.get('departement', '') # Sometimes just number
-                region_field = best_result.get('region', '') # Checking if API gives region
                 
-                if region_field: 
-                    region = region_field
-                elif cp:
+                # Priority: Siege Region Name > Root Region > CP Inference
+                region = siege.get('libelle_region') or best_result.get('region') or ""
+                
+                if not region and cp:
                      if cp.startswith('75') or cp.startswith('92') or cp.startswith('93') or cp.startswith('94') or cp.startswith('78') or cp.startswith('91') or cp.startswith('95') or cp.startswith('77'):
                          region = "Île-de-France"
                      else:
