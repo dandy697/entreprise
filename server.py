@@ -145,54 +145,8 @@ TRANCHE_EFFECTIFS = {
     "53": "10 000 salariés et plus"
 }
 
-# --- GLOBAL STATIC OVERRIDES (Safety Net) ---
-GLOBAL_OVERRIDES = {
-    "APPLE": {"Secteur": "Tech / Software", "Nom Officiel": "APPLE INC.", "Adresse": "Cupertino, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "TESLA": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "TESLA INC.", "Adresse": "Austin, TX (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "GOOGLE": {"Secteur": "Tech / Software", "Nom Officiel": "ALPHABET INC.", "Adresse": "Mountain View, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "MICROSOFT": {"Secteur": "Tech / Software", "Nom Officiel": "MICROSOFT CORP", "Adresse": "Redmond, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "AMAZON": {"Secteur": "Tech / Software", "Nom Officiel": "AMAZON.COM INC", "Adresse": "Seattle, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "META": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "FACEBOOK": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "LVMH": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    
-    # Tech / Web
-    "SPOTIFY": {"Secteur": "Tech / Software", "Nom Officiel": "SPOTIFY TECHNOLOGY", "Adresse": "Stockholm (Sweden)", "Région": "Monde", "Effectif": "5 000+ salariés"},
-    "UBER": {"Secteur": "Tech / Software", "Nom Officiel": "UBER TECHNOLOGIES", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "AIRBNB": {"Secteur": "Tech / Software", "Nom Officiel": "AIRBNB INC.", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
-    "NETFLIX": {"Secteur": "Entertainment / Media", "Nom Officiel": "NETFLIX INC.", "Adresse": "Los Gatos, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "NVIDIA": {"Secteur": "Tech / Software", "Nom Officiel": "NVIDIA CORP", "Adresse": "Santa Clara, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    
-    # Auto
-    "BMW": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "BMW AG", "Adresse": "Munich (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "MERCEDES": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "MERCEDES-BENZ GROUP", "Adresse": "Stuttgart (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "TOYOTA": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "TOYOTA MOTOR CORP", "Adresse": "Toyota City (Japan)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "VOLKSWAGEN": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "VOLKSWAGEN AG", "Adresse": "Wolfsburg (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    
-    # Consumer
-    "COCA COLA": {"Secteur": "Agri-food / Beverages", "Nom Officiel": "THE COCA-COLA COMPANY", "Adresse": "Atlanta, GA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "PEPSI": {"Secteur": "Agri-food / Beverages", "Nom Officiel": "PEPSICO INC.", "Adresse": "Harrison, NY (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "SAMSUNG": {"Secteur": "Tech / Software", "Nom Officiel": "SAMSUNG ELECTRONICS", "Adresse": "Suwon (South Korea)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "NIKE": {"Secteur": "Retail", "Nom Officiel": "NIKE INC.", "Adresse": "Beaverton, OR (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    
-    # Smartphones / Tech Asia
-    "XIAOMI": {"Secteur": "Tech / Software", "Nom Officiel": "XIAOMI CORP", "Adresse": "Beijing (China)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "OPPO": {"Secteur": "Tech / Software", "Nom Officiel": "OPPO ELECTRONICS", "Adresse": "Dongguan (China)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "HUAWEI": {"Secteur": "Tech / Software", "Nom Officiel": "HUAWEI TECHNOLOGIES", "Adresse": "Shenzhen (China)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "ONEPLUS": {"Secteur": "Tech / Software", "Nom Officiel": "ONEPLUS TECHNOLOGY", "Adresse": "Shenzhen (China)", "Région": "Monde", "Effectif": "5 000+ salariés"},
-
-    # Retail / Supermarkets (France & Global)
-    "CARREFOUR": {"Secteur": "Retail", "Nom Officiel": "CARREFOUR SA", "Adresse": "Massy (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "AUCHAN": {"Secteur": "Retail", "Nom Officiel": "AUCHAN RETAIL", "Adresse": "Croix (France)", "Région": "Hauts-de-France", "Effectif": "10 000+ salariés"},
-    "LECLERC": {"Secteur": "Retail", "Nom Officiel": "E.LECLERC", "Adresse": "Ivry-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "INTERMARCHE": {"Secteur": "Retail", "Nom Officiel": "ITM ENTREPRISES", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "INTERMARCHÉ": {"Secteur": "Retail", "Nom Officiel": "ITM ENTREPRISES", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
-    "LIDL": {"Secteur": "Retail", "Nom Officiel": "LIDL STIFTUNG", "Adresse": "Neckarsulm (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "ALDI": {"Secteur": "Retail", "Nom Officiel": "ALDI EINKAUF", "Adresse": "Essen (Germany)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "NETTO": {"Secteur": "Retail", "Nom Officiel": "NETTO MARKEN-DISCOUNT", "Adresse": "Germany", "Région": "Monde", "Effectif": "5 000+ salariés"},
-    "ACTION": {"Secteur": "Retail", "Nom Officiel": "ACTION B.V.", "Adresse": "Zwaagdijk (Netherlands)", "Région": "Monde", "Effectif": "10 000+ salariés"}
-}
+# --- GLOBAL STATIC OVERRIDES (Disabled per user request for dynamic search) ---
+# GLOBAL_OVERRIDES = { ... }
 
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
@@ -300,39 +254,26 @@ def analyze_web_content(company_name):
         return None, f"Error (Web): {str(e)}", 0
 
 def categorize_company_logic(raw_input):
-    company_name, is_valid = extract_company_from_input(raw_input)
-    
-    # 0. Check Private Global List (Fast Path)
-    upper_name = company_name.upper().strip()
-    if upper_name in GLOBAL_OVERRIDES:
-        ov = GLOBAL_OVERRIDES[upper_name]
-        return {
-            "Input": raw_input,
-            "Nom Officiel": ov["Nom Officiel"],
-            "Secteur": ov["Secteur"],
-            "Détail": "Global Brand (Static)",
-            "Source": "Base de données Interne",
-            "Score": "100%",
-            "Adresse": ov["Adresse"],
-            "Région": ov["Région"],
-            "Lien": "#"
-        }
-    
-    if not is_valid:
-        return {
-            "Input": raw_input,
-            "Nom Officiel": "N/A",
-            "Secteur": "N/A",
-            "Détail": "Email Générique ignoré",
-            "Source": "Filtre Email",
-            "Score": "0",
-            "Adresse": "-", 
-            "Région": "-",
-            "Effectif": "-",
-            "Lien": "-"
-        }
-    
-    api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=3"
+    try:
+        company_name, is_valid = extract_company_from_input(raw_input)
+        
+        # REMOVED: Static Global Overrides (User requested dynamic Web Search only)
+        # The logic will now proceed to API -> Web Fallback for everyone.
+        
+        if not is_valid:
+            return {
+                "Input": raw_input,
+                "Nom Officiel": "N/A",
+                "Secteur": "N/A",
+                "Détail": "Email Générique ignoré",
+                "Source": "Filtre Email",
+                "Score": "0",
+                "Adresse": "-", 
+                "Région": "-",
+                "Lien": "-"
+            }
+        
+        api_url = f"https://recherche-entreprises.api.gouv.fr/search?q={company_name}&per_page=3"
     
     naf_code = None
     naf_label = ""
@@ -470,16 +411,28 @@ def categorize_company_logic(raw_input):
     if address == "Non renseigné": address = "International / Web"
     if region == "Non renseigné": region = "Monde"
     
-    return {
-        **result_base,
-        "Nom Officiel": official_name if official_name != company_name else company_name,
-        "Secteur": sector_web if sector_web else "Non Trouvé",
-        "Détail": f"Web Keywords ({score_web})",
-        "Source": source_web + " (Hors France)",
-        "Score": f"{score_web}",
-        "Adresse": address,
-        "Région": region
-    }
+        return {
+            **result_base,
+            "Nom Officiel": official_name if official_name != company_name else company_name,
+            "Secteur": sector_web if sector_web else "Non Trouvé",
+            "Détail": f"Web Keywords ({score_web})",
+            "Source": source_web + " (Hors France)",
+            "Score": f"{score_web}",
+            "Adresse": address,
+            "Région": region
+        }
+
+    except Exception as e:
+        # Catch-all to prevent "Erreur Interne" in batch from crashing the loop without details
+        return {
+            "Input": raw_input,
+            "Nom Officiel": "Erreur",
+            "Secteur": "Erreur",
+            "Détail": f"FIXED CRASH: {str(e)}",
+            "Source": "System Error",
+            "Score": "0",
+            "Adresse": "-", "Région": "-", "Lien": "-"
+        }
 
 # --- Routes ---
 
