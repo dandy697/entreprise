@@ -145,6 +145,19 @@ TRANCHE_EFFECTIFS = {
     "53": "10 000 salariés et plus"
 }
 
+# --- GLOBAL STATIC OVERRIDES (Safety Net) ---
+GLOBAL_OVERRIDES = {
+    "APPLE": {"Secteur": "Tech / Software", "Nom Officiel": "APPLE INC.", "Adresse": "Cupertino, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "TESLA": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "TESLA INC.", "Adresse": "Austin, TX (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "GOOGLE": {"Secteur": "Tech / Software", "Nom Officiel": "ALPHABET INC.", "Adresse": "Mountain View, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "MICROSOFT": {"Secteur": "Tech / Software", "Nom Officiel": "MICROSOFT CORP", "Adresse": "Redmond, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "AMAZON": {"Secteur": "Tech / Software", "Nom Officiel": "AMAZON.COM INC", "Adresse": "Seattle, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "META": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "FACEBOOK": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    "LVMH": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"}
+}
+
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
     dept = zip_code[:2]
@@ -252,6 +265,22 @@ def analyze_web_content(company_name):
 
 def categorize_company_logic(raw_input):
     company_name, is_valid = extract_company_from_input(raw_input)
+    
+    # 0. Check Private Global List (Fast Path)
+    upper_name = company_name.upper().strip()
+    if upper_name in GLOBAL_OVERRIDES:
+        ov = GLOBAL_OVERRIDES[upper_name]
+        return {
+            "Input": raw_input,
+            "Nom Officiel": ov["Nom Officiel"],
+            "Secteur": ov["Secteur"],
+            "Détail": "Global Brand (Static)",
+            "Source": "Base de données Interne",
+            "Score": "100%",
+            "Adresse": ov["Adresse"],
+            "Région": ov["Région"],
+            "Lien": "#"
+        }
     
     if not is_valid:
         return {
@@ -373,11 +402,12 @@ def categorize_company_logic(raw_input):
                       }
             
             # Debugging: If we stick with API, let's say what the web found
-            if is_suspicious_sector and sector_web:
+            if is_suspicious_sector:
+                 web_msg = f"(Web saw: {sector_web} score {score_web})" if sector_web else "(Web Search Failed/Blocked)"
                  return {
                      **result_base, 
                      "Secteur": sector_naf, 
-                     "Détail": f"NAF: {naf_code} (Web saw: {sector_web} score {score_web})", 
+                     "Détail": f"NAF: {naf_code} {web_msg}", 
                      "Source": "Officiel (Code NAF)", 
                      "Score": "100%"
                  }
