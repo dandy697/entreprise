@@ -218,7 +218,11 @@ GLOBAL_OVERRIDES = {
     "ADOBE": {"Secteur": "Tech / Software", "Nom Officiel": "ADOBE INC.", "Adresse": "San Jose, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "NINTENDO": {"Secteur": "Entertainment / Media", "Nom Officiel": "NINTENDO CO., LTD", "Adresse": "Kyoto (Japan)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "PHILIPS": {"Secteur": "Manufacturing / Industry", "Nom Officiel": "KONINKLIJKE PHILIPS", "Adresse": "Amsterdam (Netherlands)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "SALESFORCE": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"}
+    "SALESFORCE": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
+    
+    # Modern Tech / Remote Tools
+    "ZOOM": {"Secteur": "Tech / Software", "Nom Officiel": "ZOOM VIDEO COMMUNICATIONS", "Adresse": "San Jose, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
+    "SLACK": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE (SLACK)", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "1 000+ salariés"}
 }
 
 def get_region_from_dept(zip_code):
