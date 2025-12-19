@@ -95,7 +95,7 @@ SECTOR_CONFIG = {
     },
     "Manufacturing / Industry": {
         "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"],
-        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery"]
+        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "tesla", "ev", "electric vehicle", "voiture", "automotive"]
     },
     "Not For Profit": {
         "naf_prefixes": ["94"],
@@ -115,7 +115,7 @@ SECTOR_CONFIG = {
     },
     "Tech / Software": {
         "naf_prefixes": ["582", "6201", "631", "620"],
-        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "data", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer"]
+        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "data", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "apple", "iphone", "ios", "mac", "electronics", "smartphone"]
     },
     "Transportation, Logistics & Storage": {
         "naf_prefixes": ["49", "50", "51", "52", "53"],
@@ -358,7 +358,7 @@ def categorize_company_logic(raw_input):
                  
                  # If Web says "Tech" or "Retail" (and score is decent), we OVERRIDE the API.
                  # Example: API says "Apple = Agriculture", Web says "Apple = Tech". We take Tech.
-                 if sector_web and sector_web != "Non Trouvé" and sector_web != sector_naf and score_web >= 4:
+                 if sector_web and sector_web != "Non Trouvé" and sector_web != sector_naf and score_web >= 2:
                       address = "International / Web" # Override address too as it's likely wrong
                       region = "Monde"
                       return {
