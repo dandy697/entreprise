@@ -161,6 +161,7 @@ GLOBAL_OVERRIDES = {
     "SPOTIFY": {"Secteur": "Tech / Software", "Nom Officiel": "SPOTIFY TECHNOLOGY", "Adresse": "Stockholm (Sweden)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "UBER": {"Secteur": "Tech / Software", "Nom Officiel": "UBER TECHNOLOGIES", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "AIRBNB": {"Secteur": "Tech / Software", "Nom Officiel": "AIRBNB INC.", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
+    "AIR BNB": {"Secteur": "Tech / Software", "Nom Officiel": "AIRBNB INC.", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "5 000+ salariés"},
     "NETFLIX": {"Secteur": "Entertainment / Media", "Nom Officiel": "NETFLIX INC.", "Adresse": "Los Gatos, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "NVIDIA": {"Secteur": "Tech / Software", "Nom Officiel": "NVIDIA CORP", "Adresse": "Santa Clara, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     
@@ -327,8 +328,18 @@ def categorize_company_logic(raw_input):
         
         # 0. Check Private Global List (Fast Path)
         upper_name = company_name.upper().strip()
+        
+        # Smart Normalization (Handle "AIR BNB", "L.V.M.H", "COCA-COLA")
+        normalized_name = upper_name.replace(" ", "").replace(".", "").replace("-", "")
+        
+        target_override = None
         if upper_name in GLOBAL_OVERRIDES:
-            ov = GLOBAL_OVERRIDES[upper_name]
+            target_override = GLOBAL_OVERRIDES[upper_name]
+        elif normalized_name in GLOBAL_OVERRIDES:
+             target_override = GLOBAL_OVERRIDES[normalized_name]
+            
+        if target_override:
+            ov = target_override
             return {
                 "Input": raw_input,
                 "Nom Officiel": ov["Nom Officiel"],
