@@ -438,7 +438,10 @@ def categorize_company_logic(raw_input):
                     "Construction / Real Estate", 
                     "Agri-food / Beverages",
                     "Hotels / Restaurants",
-                    "Consulting / IT Services"
+                    "Consulting / IT Services",
+                    "Not For Profit",
+                    "Retail",
+                    "Transportation, Logistics & Storage"
                 ]
                 
                 if is_suspicious_sector:
