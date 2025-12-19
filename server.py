@@ -155,7 +155,13 @@ GLOBAL_OVERRIDES = {
     "META": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "FACEBOOK": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "LVMH": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CHRISTIAN DIOR": {"Secteur": "Luxury / Fashion", "Nom Officiel": "CHRISTIAN DIOR SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "LOUIS VUITTON": {"Secteur": "Luxury / Fashion", "Nom Officiel": "LOUIS VUITTON MALLETIER", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "ORANGE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ORANGE SA", "Adresse": "Issy-les-Moulineaux (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "SFR": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "SFR", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "FREE": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "ILIAD": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "ILIAD (FREE)", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "BOUYGUES": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "BOUYGUES TELECOM", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     
     # Tech / Web
     "SPOTIFY": {"Secteur": "Tech / Software", "Nom Officiel": "SPOTIFY TECHNOLOGY", "Adresse": "Stockholm (Sweden)", "Région": "Monde", "Effectif": "5 000+ salariés"},
@@ -226,6 +232,10 @@ GLOBAL_OVERRIDES = {
     "SLACK": {"Secteur": "Tech / Software", "Nom Officiel": "SALESFORCE (SLACK)", "Adresse": "San Francisco, CA (USA)", "Région": "Monde", "Effectif": "1 000+ salariés"}
 }
 
+# Pre-compute Normalized Keys for Robust Matching
+# Maps "COCACOLA" -> "COCA COLA", "LVMH" -> "LVMH", "AIRBNB" -> "AIRBNB"
+NORMALIZED_OVERRIDES = {k.replace(" ", "").replace(".", "").replace("-", ""): k for k in GLOBAL_OVERRIDES}
+
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
     dept = zip_code[:2]
@@ -246,7 +256,10 @@ def extract_company_from_input(input_str):
             domain = input_str.split("@")[1]
             if "." in domain:
                 company = domain.split(".")[0]
-                if company.lower() in ["gmail", "outlook", "hotmail", "yahoo", "orange", "wanadoo", "free", "sfr", "icloud"]:
+                company = domain.split(".")[0]
+                # Smart Filter: Keep Gmail/Outlook ignored, but ALLOW Orange/Free/SFR because they are also big companies to target.
+                # If it's a personal email, let the user decide, but don't block valid corporate emails.
+                if company.lower() in ["gmail", "outlook", "hotmail", "yahoo", "wanadoo", "icloud", "laposte"]:
                     return input_str, False 
         except:
             pass
@@ -285,6 +298,7 @@ def analyze_web_content(company_name):
         search_results = []
         snippet_text = ""
         source_url = ""
+        page_title = "" 
         
         try:
             # DuckDuckGo Search
@@ -294,14 +308,15 @@ def analyze_web_content(company_name):
                  if results:
                       first_res = results[0]
                       source_url = first_res.get('href', '')
+                      page_title = first_res.get('title', '')
                       # COMBINE Title + Body from the search result directly!
                       # This bypasses the need to visit the site (which might block us)
-                      snippet_text = f"{first_res.get('title', '')} {first_res.get('body', '')}"
+                      snippet_text = f"{page_title} {first_res.get('body', '')}"
         except Exception as e:
              print(f"DDG Search Error: {e}")
             
         if not snippet_text:
-            return None, "URL not found", 0
+            return None, "URL not found", 0, ""
 
         # Score the Snippet directly
         scores_snippet = score_text(snippet_text, weights=5.0) # High weight because snippet is dense
@@ -309,18 +324,18 @@ def analyze_web_content(company_name):
         final_scores = scores_snippet
             
         if not final_scores or all(score == 0 for score in final_scores.values()):
-             return "Unknown", f"Web Analysis ({source_url}) - No keywords in snippet", 0
+             return "Unknown", f"Web Analysis ({source_url}) - No keywords in snippet", 0, ""
              
         best_sector = max(final_scores, key=final_scores.get)
         max_score = final_scores[best_sector]
         
         if max_score > 0:
-             return best_sector, f"Web Analysis ({source_url})", max_score
+             return best_sector, f"Web Analysis ({source_url})", max_score, page_title
         
-        return "Unknown", f"Web Analysis ({source_url}) - No keywords matched", 0
+        return "Unknown", f"Web Analysis ({source_url}) - No keywords matched", 0, ""
 
     except Exception as e:
-        return None, f"Error (Web): {str(e)}", 0
+        return None, f"Error (Web): {str(e)}", 0, ""
 
 def categorize_company_logic(raw_input):
     try:
@@ -329,14 +344,16 @@ def categorize_company_logic(raw_input):
         # 0. Check Private Global List (Fast Path)
         upper_name = company_name.upper().strip()
         
-        # Smart Normalization (Handle "AIR BNB", "L.V.M.H", "COCA-COLA")
-        normalized_name = upper_name.replace(" ", "").replace(".", "").replace("-", "")
+        # Smart Normalization (Handle "AIR BNB", "L.V.M.H", "COCA-COLA", "cocacola")
+        normalized_input = upper_name.replace(" ", "").replace(".", "").replace("-", "")
         
         target_override = None
+        
         if upper_name in GLOBAL_OVERRIDES:
             target_override = GLOBAL_OVERRIDES[upper_name]
-        elif normalized_name in GLOBAL_OVERRIDES:
-             target_override = GLOBAL_OVERRIDES[normalized_name]
+        elif normalized_input in NORMALIZED_OVERRIDES:
+             real_key = NORMALIZED_OVERRIDES[normalized_input]
+             target_override = GLOBAL_OVERRIDES[real_key]
             
         if target_override:
             ov = target_override
@@ -457,7 +474,7 @@ def categorize_company_logic(raw_input):
                 
                 if is_suspicious_sector:
                      # Check the web
-                     sector_web, source_web, score_web = analyze_web_content(company_name)
+                     sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
                      
                      # If Web says "Tech" or "Retail" (and score is decent), we OVERRIDE the API.
                      # Example: API says "Apple = Agriculture", Web says "Apple = Tech". We take Tech.
@@ -472,7 +489,7 @@ def categorize_company_logic(raw_input):
                               "Score": f"{score_web}",
                               "Adresse": address,
                               "Région": region,
-                              "Nom Officiel": company_name.upper()
+                              "Nom Officiel": title_web if title_web and len(title_web) < 50 else company_name.upper()
                           }
                 
                 # Debugging: If we stick with API, let's say what the web found
@@ -495,7 +512,7 @@ def categorize_company_logic(raw_input):
                  return {**result_base, "Secteur": best_label_sector, "Détail": f"NAF: {naf_code} (Label)", "Source": "Officiel (Label)", "Score": f"{label_scores[best_label_sector]}"}
     
         # --- FALLBACK: WEB ANALYSIS (International / No SIRET) ---
-        sector_web, source_web, score_web = analyze_web_content(company_name)
+        sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
         
         # If we are here, it means we didn't find a NAF code. 
         # Likely international or just name match without NAF.
@@ -505,7 +522,7 @@ def categorize_company_logic(raw_input):
         
         return {
             **result_base,
-            "Nom Officiel": official_name if official_name != company_name else company_name,
+            "Nom Officiel": title_web if title_web and len(title_web) < 60 else (official_name if official_name != company_name else company_name.upper()),
             "Secteur": sector_web if sector_web else "Non Trouvé",
             "Détail": f"Web Keywords ({score_web})",
             "Source": source_web + " (Hors France)",
