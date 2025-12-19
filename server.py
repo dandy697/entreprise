@@ -364,13 +364,23 @@ def categorize_company_logic(raw_input):
                       return {
                           **result_base,
                           "Secteur": sector_web,
-                          "Détail": f"Web Conflict Override (API was {sector_naf})", 
-                          "Source": f"{source_web} (Correction)", 
+                          "Détail": f"Web Override (was {sector_naf})", 
+                          "Source": f"{source_web}", 
                           "Score": f"{score_web}",
                           "Adresse": address,
                           "Région": region,
-                          "Nom Officiel": company_name.upper() # Use input name usually better for global brands
+                          "Nom Officiel": company_name.upper()
                       }
+            
+            # Debugging: If we stick with API, let's say what the web found
+            if is_suspicious_sector and sector_web:
+                 return {
+                     **result_base, 
+                     "Secteur": sector_naf, 
+                     "Détail": f"NAF: {naf_code} (Web saw: {sector_web} score {score_web})", 
+                     "Source": "Officiel (Code NAF)", 
+                     "Score": "100%"
+                 }
 
             return {**result_base, "Secteur": sector_naf, "Détail": f"NAF: {naf_code}", "Source": "Officiel (Code NAF)", "Score": "100%"}
 
