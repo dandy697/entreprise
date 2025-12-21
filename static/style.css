@@ -169,6 +169,63 @@ h3 {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.01);
 }
 
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 0.95em;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.progress-track {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), #4facfe);
+    width: 0%;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 12px rgba(var(--primary-color-rgb), 0.6);
+    border-radius: 6px;
+}
+
+/* Sector Pill Style */
+.sector-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    background-color: #e3f2fd;
+    /* Light Blue 50 */
+    color: #1976d2;
+    /* Blue 700 */
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 1px solid rgba(25, 118, 210, 0.1);
+}
+
+/* Edit Icon next to pill */
+.status-icon.success {
+    color: var(--success);
+}
+
+.edit-icon {
+    margin-left: 8px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    font-size: 0.85em;
+}
+
+.row-display:hover .edit-icon {
+    opacity: 1;
+}
+
 #singleInput:focus {
     background: #FFFFFF;
     border-color: var(--primary-color);
@@ -634,4 +691,24 @@ td:hover .edit-icon {
     background: #fff;
     outline: none;
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+/* Competitor Alert Badge */
+.competitor-alert {
+    background-color: #fee2e2;
+    color: #ef4444;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-right: 8px;
+    border: 1px solid #fecaca;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.competitor-alert:hover {
+    background-color: #fca5a5;
+    cursor: help;
 }

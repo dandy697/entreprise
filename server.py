@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 import pandas as pd
 import requests
@@ -10,9 +10,29 @@ from urllib.parse import urlparse
 
 import json
 import os
+import redis
+from dotenv import load_dotenv
+
+# Load environment variables from .env file (for local dev)
+load_dotenv()
+
+# Redis / Vercel KV Configuration
+KV_URL = os.environ.get("KV_URL") or os.environ.get("REDIS_URL")
+redis_client = None
+
+if KV_URL:
+    try:
+        redis_client = redis.from_url(KV_URL)
+        redis_client.ping()
+        print("Connected to Vercel KV (Redis)")
+    except Exception as e:
+        print(f"Failed to connect to Redis: {e}")
+        redis_client = None
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
+
+from ai_classifier import analyze_with_gemini
 
 # --- Configuration ---
 CORRECTIONS_FILE = "corrections.json"
@@ -20,6 +40,19 @@ USER_CORRECTIONS = {}
 
 def load_corrections():
     global USER_CORRECTIONS
+    
+    # 1. Try Redis first
+    if redis_client:
+        try:
+            # HGETALL returns byte keys/values, need to decode
+            data = redis_client.hgetall("corrections")
+            USER_CORRECTIONS = {k.decode('utf-8'): v.decode('utf-8') for k, v in data.items()}
+            return
+        except Exception as e:
+            print(f"Redis Load Error: {e}")
+            # Fallback to local file if Redis fails
+            
+    # 2. Fallback to Local File
     if os.path.exists(CORRECTIONS_FILE):
         try:
             with open(CORRECTIONS_FILE, 'r', encoding='utf-8') as f:
@@ -27,11 +60,25 @@ def load_corrections():
         except:
             USER_CORRECTIONS = {}
 
+def normalize_key(name):
+    # Centralized normalization for consistent key generation
+    if not name: return ""
+    return name.upper().strip()
+
 def save_correction(name, sector):
     global USER_CORRECTIONS
     # Normalize key: uppercase without spaces/special chars for robust matching
-    key = name.upper().strip()
+    key = normalize_key(name)
     USER_CORRECTIONS[key] = sector
+    
+    # 1. Save to Redis
+    if redis_client:
+        try:
+            redis_client.hset("corrections", key, sector)
+        except Exception as e:
+            print(f"Redis Save Error: {e}")
+            
+    # 2. Save to Local File (Always try to keep in sync if possible, or for dev)
     try:
         with open(CORRECTIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump(USER_CORRECTIONS, f, ensure_ascii=False, indent=2)
@@ -47,6 +94,19 @@ CUSTOM_SECTORS = []
 
 def load_custom_sectors():
     global CUSTOM_SECTORS
+    
+    # 1. Try Redis
+    if redis_client:
+        try:
+            # Storing as a single JSON string for simplicity (or could be a Redis Set)
+            data = redis_client.get("custom_sectors")
+            if data:
+                CUSTOM_SECTORS = json.loads(data)
+                return
+        except Exception as e:
+             print(f"Redis Custom Sectors Load Error: {e}")
+             
+    # 2. Fallback Local
     if os.path.exists(CUSTOM_SECTORS_FILE):
         try:
             with open(CUSTOM_SECTORS_FILE, 'r', encoding='utf-8') as f:
@@ -55,6 +115,15 @@ def load_custom_sectors():
             CUSTOM_SECTORS = []
 
 def save_custom_sectors():
+    
+    # 1. Redis
+    if redis_client:
+        try:
+            redis_client.set("custom_sectors", json.dumps(CUSTOM_SECTORS))
+        except Exception as e:
+             print(f"Redis Custom Sectors Save Error: {e}")
+
+    # 2. Local
     try:
         with open(CUSTOM_SECTORS_FILE, 'w', encoding='utf-8') as f:
             json.dump(CUSTOM_SECTORS, f, ensure_ascii=False, indent=2)
@@ -91,99 +160,123 @@ DEPT_TO_REGION = {
 SECTOR_CONFIG = {
     "Agriculture / Livestock / Seafood": {
         "naf_prefixes": ["01", "02", "03"],
-        "keywords": ["agriculture", "élevage", "pêche", "agricole", "ferme", "bio", "tracteur", "champs", "vigne", "viticulture", "horticulture", "maraichage", "bétail", "aquaculture", "farming", "livestock", "seafood", "crops"]
+        "keywords": ["agriculture", "élevage", "pêche", "agricole", "ferme", "bio", "tracteur", "champs", "vigne", "viticulture", "horticulture", "maraichage", "bétail", "aquaculture", "farming", "livestock", "seafood", "crops", "agri", "agro", "vignoble", "éleveur", "céréales", "semences", "fisheries"]
     },
     "Banking": {
         "naf_prefixes": ["641"],
-        "keywords": ["banque", "crédit", "bancaire", "compte", "livret", "cb", "bank", "banking", "loan", "credit", "bnp", "société générale", "crédit agricole", "bpce"]
+        "keywords": ["banque", "crédit", "bancaire", "compte", "livret", "cb", "bank", "banking", "loan", "credit", "bnp", "société générale", "crédit agricole", "bpce", "lender", "mortgage", "prêt", "emprunt", "financement", "épargne"]
     },
     "Chemicals": {
         "naf_prefixes": ["20"],
-        "keywords": ["chimie", "laboratoire", "molécules", "réactif", "polymère", "plastique", "chimique", "petrochemical", "chemicals", "chemistry", "lab", "solvay", "arkema", "air liquide"]
+        "keywords": ["chimie", "laboratoire", "molécules", "réactif", "polymère", "plastique", "chimique", "petrochemical", "chemicals", "chemistry", "lab", "solvay", "arkema", "air liquide", "gas", "gaz", "azote", "hydrogène", "composites", "resins", "paint", "peinture", "coatings"]
     },
     "Communication / Media & Entertainment / Telecom": {
         "naf_prefixes": ["59", "60", "61", "63"],
-        "keywords": ["télécom", "média", "publicité", "fibre", "internet", "presse", "journal", "tv", "radio", "marketing", "agence", "communication", "entertainment", "telecom", "broadcasting", "advertising", "media", "orange", "sfr", "bouygues", "free", "publicis", "havas"]
+        "keywords": ["télécom", "média", "publicité", "fibre", "internet", "presse", "journal", "tv", "radio", "marketing", "agence", "communication", "entertainment", "telecom", "broadcasting", "advertising", "media", "orange", "sfr", "bouygues", "free", "publicis", "havas", "digital agency", "rédaction", "news", "contenu", "publishing", "édition", "production audiovisuelle", "streaming"]
     },
     "Construction": {
         "naf_prefixes": ["41", "42", "43"],
-        "keywords": ["btp", "construction", "bâtiment", "génie civil", "infrastructure", "travaux", "architecture", "maçonnerie", "électicité", "plomberie", "architect", "builder", "contractor", "civil", "renovation", "vinci", "eiffage", "bouygues construction"]
+        "keywords": ["btp", "construction", "bâtiment", "génie civil", "infrastructure", "travaux", "architecture", "maçonnerie", "électicité", "plomberie", "architect", "builder", "contractor", "civil", "renovation", "vinci", "eiffage", "bouygues construction", "rénovation", "agencement", "menuiserie", "charpente", "promoteur", "immobilier neuf", "engineering", "ingénierie bâtiment", "hvac", "étanchéité"]
     },
     "Consulting / IT Services": {
         "naf_prefixes": ["62", "631", "582", "702", "692", "7112", "712", "732", "74"],
-        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "rub", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini", "deloitte", "kpmg", "pwc", "mckinsey", "bain", "bcg", "accenture", "sogeti", "sopra", "wavestone", "alteca", "umanis"]
+        "keywords": ["conseil", "consulting", "esn", "stratégie", "audit", "expertise", "ingénierie", "rub", "management", "digital", "transformation", "it services", "système d'information", "data", "advisory", "capgemini", "deloitte", "kpmg", "pwc", "mckinsey", "bain", "bcg", "accenture", "sogeti", "sopra", "wavestone", "alteca", "umanis", "devops", "cloud computing", "cybersécurité", "business intelligence", "big data", "agile", "scrum", "moa", "moe", "change management"]
     },
     "CPG (Consumer Packaged Goods)": {
         "naf_prefixes": ["204"],
-        "keywords": ["fmcg", "biens de consommation", "hygiène", "produits ménagers", "cosmétique", "beauté", "parfum", "shampoing", "savon", "lessive", "cpg", "consumer goods", "l'oréal", "procter", "gamble", "unilever", "danone", "nestlé", "henkel"]
+        "keywords": ["fmcg", "biens de consommation", "hygiène", "produits ménagers", "cosmétique", "beauté", "parfum", "shampoing", "savon", "lessive", "cpg", "consumer goods", "l'oréal", "procter", "gamble", "unilever", "danone", "nestlé", "henkel", "persil", "dash", "ariel", "schwarzkopf", "nivea", "dove", "maquillage", "makeup", "skincare", "soin", "personal care", "toiletries"]
     },
     "Education": {
         "naf_prefixes": ["85"],
-        "keywords": ["éducation", "formation", "école", "université", "training", "learning", "elearning", "edtech", "campus", "formation continue", "school", "university", "academy", "college"]
+        "keywords": ["éducation", "formation", "école", "université", "training", "learning", "elearning", "edtech", "campus", "formation continue", "school", "university", "academy", "college", "enseignement", "pédagogie", "cours", "tutoring", "soutien scolaire", "mba", "master", "licence", "certification"]
     },
     "Energy / Utilities": {
         "naf_prefixes": ["35", "36", "37", "38", "39"],
-        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol", "renewables", "green", "carbon", "hydrogen", "edf", "engie", "total", "veolia", "suez"]
+        "keywords": ["énergie", "électricité", "gaz", "eau", "déchets", "environnement", "recyclage", "solaire", "éolien", "nucléaire", "oil", "petrol", "renewables", "green", "carbon", "hydrogen", "edf", "engie", "total", "veolia", "suez", "photovoltaïque", "biomasse", "hydro", "grid", "réseau électrique", "assainissement", "waste management", "energy", "batteries", "charging"]
     },
     "Finance / Real Estate": {
         "naf_prefixes": ["64", "66", "68"],
-        "keywords": ["finance", "immobilier", "investissement", "gestion d'actifs", "courtier", "syndic", "promoteur", "real estate", "realty", "property", "logement", "immo", "wealth", "fintech", "payment", "trading", "crypto", "blockchain", "vc", "private equity", "fund", "foncia", "nexity"]
+        "keywords": ["finance", "financial", "services financiers", "immobilier", "investissement", "gestion d'actifs", "courtier", "syndic", "promoteur", "real estate", "realty", "property", "logement", "immo", "wealth", "fintech", "payment", "trading", "crypto", "blockchain", "vc", "private equity", "fund", "foncia", "nexity", "asset management", "patrimoine", "défiscalisation", "location", "vente immobilière", "agency", "investor", "capital", "holding", "reit"]
     },
     "Food / Beverages": {
         "naf_prefixes": ["10", "11"],
-        "keywords": ["agroalimentaire", "aliments", "boissons", "food", "beverage", "vin", "spiritueux", "bière", "champagne", "nutrition", "snack", "dairy", "laitier", "viande", "boulangerie", "traiteur"]
+        "keywords": ["agroalimentaire", "aliments", "boissons", "food", "beverage", "vin", "spiritueux", "bière", "champagne", "nutrition", "snack", "dairy", "laitier", "viande", "boulangerie", "traiteur", "épicerie", "confiserie", "chocolat", "surgelés", "frozen", "drinks", "juice", "jus", "distillery", "brewery", "winery", "bio food", "organic", "restaurant supply"]
     },
     "Healthcare / Medical Services": {
         "naf_prefixes": ["86", "87", "88"],
-        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "radiologie", "dentaire", "kine", "ramsay", "elsan"]
+        "keywords": ["santé", "clinique", "hôpital", "soins", "médecin", "infirmier", "ehpad", "médical", "chirurgie", "patient", "healthcare", "medical", "hospital", "clinic", "care", "doctor", "diagnostic", "radiologie", "dentaire", "kine", "ramsay", "elsan", "korian", "orpea", "nursing", "home care", "aide à domicile", "analyse", "labo", "biologie", "medtech", "e-health"]
     },
     "Hotels / Restaurants": {
         "naf_prefixes": ["55", "56"],
-        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering", "accor", "club med", "sodexo", "elior"]
+        "keywords": ["hôtel", "restaurant", "tourisme", "hébergement", "camping", "voyage", "bar", "café", "brasserie", "cuisine", "hotel", "hospitality", "tourism", "restaurant", "catering", "accor", "club med", "sodexo", "elior", "travel", "resort", "vacances", "booking", "chef", "gastronomie", "food service", "fast food"]
     },
     "Insurance / Mutual Health Insurance": {
         "naf_prefixes": ["65"],
-        "keywords": ["assurance", "mutuelle", "courtage", "assureur", "prévoyance", "risques", "insurance", "underwriting", "axa", "allianz", "generali", "maif", "macif", "groupama", "malakoff"]
+        "keywords": ["assurance", "mutuelle", "courtage", "assureur", "prévoyance", "risques", "insurance", "underwriting", "axa", "allianz", "generali", "maif", "macif", "groupama", "malakoff", "ag2r", "harmonie", "protection sociale", "sinistre", "broker", "reinsurance", "réassurance", "insurtech"]
     },
     "Luxury": {
         "naf_prefixes": ["141", "142", "151", "152"],
-        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel", "lvmh", "kering", "hermès", "chanel", "dior", "vuitton", "gucci", "prada"]
+        "keywords": ["luxe", "prestige", "haute couture", "joaillerie", "maroquinerie", "palace", "luxury", "fashion", "jewelry", "premium", "high-end", "mode", "vêtement", "chaussures", "shoes", "wear", "apparel", "lvmh", "kering", "hermès", "chanel", "dior", "vuitton", "gucci", "prada", "rolex", "cartier", "bijoux", "diamant", "montres", "watches", "perfumery"]
     },
     "Manufacturing / Industry": {
         "naf_prefixes": ["13", "14", "15", "16", "17", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33"],
-        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "automotive", "aéronautique", "aerospace", "defense", "textile", "imprimerie", "packaging", "saint-gobain", "schneider", "legrand", "michelin"]
+        "keywords": ["industrie", "usine", "fabrication", "mécanique", "métallurgie", "plasturgie", "assemblage", "production", "machine", "outil", "industriel", "manufacturing", "industry", "factory", "plant", "metal", "machinery", "automotive", "aéronautique", "aerospace", "defense", "textile", "imprimerie", "packaging", "saint-gobain", "schneider", "legrand", "michelin", "stellantis", "renault", "airbus", "thales", "safran", "dassault", "alstom", "composants", "robotics", "automation", "electronics assembly"]
     },
     "Not For Profit": {
         "naf_prefixes": ["94", "91"],
-        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire", "syndicat", "union", "club", "croix rouge", "secours populaire"]
+        "keywords": ["association", "fondation", "ong", "non-profit", "charity", "bénévole", "social", "humanitaire", "syndicat", "union", "club", "croix rouge", "secours populaire", "médecins sans frontières", "unicef", "caritas", "aide", "solidarité", "non lucratif", "philanthropy"]
     },
     "Pharmaceutics": {
         "naf_prefixes": ["21"],
-        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine", "lifescience", "sanofi", "servier", "pfizer", "moderna"]
+        "keywords": ["pharmacie", "médicament", "biotech", "laboratoire", "vaccin", "recherche", "molécule", "thérapie", "pharmaceutical", "pharma", "drug", "biotechnology", "medicine", "lifescience", "sanofi", "servier", "pfizer", "moderna", "astrazeneca", "bayer", "novartis", "roche", "lilly", "clinical trials", "essais cliniques", "cro"]
     },
     "Public administration & government": {
         "naf_prefixes": ["84"],
-        "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail", "ambassade", "consulat"]
+        "keywords": ["mairie", "préfecture", "ministère", "collectivité", "public", "etat", "government", "administration", "caisse", "caf", "urssaf", "pole emploi", "france travail", "ambassade", "consulat", "département", "région", "agglomération", "commune", "service public"]
     },
     "Retail": {
         "naf_prefixes": ["45", "46", "47"],
-        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "shopping", "mall", "outlet", "franchise", "carrefour", "auchan", "leclerc", "decathlon", "fnac", "darty", "amazon", "cdiscount"]
+        "keywords": ["commerce", "vente", "magasin", "boutique", "supermarché", "distribution", "retail", "store", "shop", "e-commerce", "marketplace", "grossiste", "grand magasin", "shopping", "mall", "outlet", "franchise", "carrefour", "auchan", "leclerc", "decathlon", "fnac", "darty", "amazon", "cdiscount", "bricolage", "jardinage", "ameublement", "fashion retail", "grocery", "point de vente", "wholesaler"]
     },
     "HR / Recruitment / Interim": {
         "naf_prefixes": ["78"],
-        "keywords": ["intérim", "recrutement", "rh", "ressources humaines", "agence d'emploi", "staffing", "recruitment", "chasseur de tête", "talent", "manpower", "adecco", "randstad", "crit", "synergie", "proman"]
+        "keywords": ["intérim", "recrutement", "rh", "ressources humaines", "agence d'emploi", "staffing", "recruitment", "chasseur de tête", "talent", "manpower", "adecco", "randstad", "crit", "synergie", "proman", "michael page", "hays", "robert half", "headhunting", "jobs", "emplois", "carrière", "paye", "payroll"]
     },
     "Tech / Software": {
         "naf_prefixes": ["582", "6201", "6312", "262"],
-        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "start-up", "google", "microsoft", "apple", "meta", "aws", "salesforce", "sap", "oracle"]
+        "keywords": ["logiciel", "saas", "tech", "software", "application", "ia", "intelligence artificielle", "cloud", "développement", "web", "app", "cybersecurity", "platform", "technology", "developer", "electronics", "hardware", "computer", "start-up", "google", "microsoft", "apple", "meta", "aws", "salesforce", "sap", "oracle", "it", "informatique", "data science", "machine learning", "coding", "programmation", "algorithme", "api", "fintech", "blockchain", "iot", "data center"]
     },
     "Transportation, Logistics & Storage": {
         "naf_prefixes": ["49", "50", "51", "52", "53"],
-        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "bateau", "compagnie aérienne", "rail", "ferroviaire", "maritime", "port", "sncf", "air france", "maersk", "cma cgm", "dhl", "fedex", "ups"]
+        "keywords": ["transport", "logistique", "fret", "livraison", "messagerie", "entrepôt", "supply chain", "shipping", "transit", "colis", "airline", "aérien", "avion", "bateau", "compagnie aérienne", "rail", "ferroviaire", "maritime", "port", "sncf", "air france", "maersk", "cma cgm", "dhl", "fedex", "ups", "geodis", "bolloré", "xpo", "container", "cargo", "logistics", "warehouse", "freight"]
     }
 }
 
+# --- Competitor Watchlist (Keyrus & Market) ---
+COMPETITORS = {
+    "ACCENTURE", "CAPGEMINI", "DELOITTE", "PWC", "EY", "KPMG", 
+    "SOPRA STERIA", "CGI", "ATOS", "WAVESTONE", "INETUM", 
+    "BUSINESS & DECISION", "ARTEFACT", "CONVERTEO", "JEMS", 
+    "MICROPOLE", "VISEO", "UMANIS", "DEVOTEAM", "TOLUNA", 
+    "BVA", "IPSOS", "KANTAR", "MCKINSEY", 
+    "BAIN", "BCG", "BOSTON CONSULTING GROUP", "KEYRUS" # Keeping Keyrus in list but fixing logic? User said "Disney est Keyrus sont toujours des concurrent". 
+    # WAIT. User said "Disney est Keyrus sont toujours des concurrent" -> "Disney AND Keyrus remain competitors". 
+    # If the user meant "Why are they competitors?", then I should remove them or fix the matching.
+    # If the user meant "They ARE competitors" (assertion), then I should default to keeping them if valid, but the user likely reported a bug.
+    # The previous turn analysis: "implies an issue... likely that they are incorrectly identified".
+    # And my plan said: "Remove KEYRUS from the COMPETITORS list".
+    # So I will remove KEYRUS. Line 192 has Keyrus.
+    "BVA", "IPSOS", "KANTAR", "MCKINSEY", 
+}
+
 NAF_BLACKLIST = ["7010Z", "6420Z"]
+
+# ... (We need to jump to the logic part, but I can't do non-contiguous edits in one block)
+# I will do the list revert first, then the logic change in a second step or if the tool supports it... 
+# Wait, the prompt says "Revert... Then modify". 
+# replace_file_content is for SINGLE CONTIGUOUS BLOCK. 
+# I cannot edit line 197 and line 621 in one go.
+# I will use multi_replace.
 
 # --- Mappings ---
 TRANCHE_EFFECTIFS = {
@@ -214,7 +307,7 @@ GLOBAL_OVERRIDES = {
     "AMAZON": {"Secteur": "Tech / Software", "Nom Officiel": "AMAZON.COM INC", "Adresse": "Seattle, WA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "META": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
     "FACEBOOK": {"Secteur": "Tech / Software", "Nom Officiel": "META PLATFORMS", "Adresse": "Menlo Park, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "LVMH": {"Secteur": "Luxury", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "LVMH": {"Secteur": "Luxury", "Nom Officiel": "LVMH MOET HENNESSY", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/775670417"},
     "CHRISTIAN DIOR": {"Secteur": "Luxury", "Nom Officiel": "CHRISTIAN DIOR SE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "LOUIS VUITTON": {"Secteur": "Luxury", "Nom Officiel": "LOUIS VUITTON MALLETIER", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "CHRISTIAN LOUBOUTIN": {"Secteur": "Luxury", "Nom Officiel": "CHRISTIAN LOUBOUTIN", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
@@ -234,6 +327,8 @@ GLOBAL_OVERRIDES = {
     "BNP": {"Secteur": "Banking", "Nom Officiel": "BNP PARIBAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/662042449"},
     "BNP PARIBAS": {"Secteur": "Banking", "Nom Officiel": "BNP PARIBAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/662042449"},
     "SOCIETE GENERALE": {"Secteur": "Banking", "Nom Officiel": "SOCIETE GENERALE", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/552120222"},
+    "SNOWFLAKE": {"Nom Officiel": "SNOWFLAKE FRANCE", "Secteur": "Tech / Software", "Adresse": "Non renseigné", "Région": "Île-de-France"},
+    "ATOS": {"Nom Officiel": "ATOS SE", "Secteur": "Consulting / IT Services", "Adresse": "Bezons (France)", "Région": "Île-de-France", "Effectif": "100 000+ salariés"},
     "CREDIT AGRICOLE": {"Secteur": "Banking", "Nom Officiel": "CREDIT AGRICOLE SA", "Adresse": "Montrouge (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/784608416"},
 
     # Energy
@@ -288,7 +383,7 @@ GLOBAL_OVERRIDES = {
     "ONEPLUS": {"Secteur": "Tech / Software", "Nom Officiel": "ONEPLUS TECHNOLOGY", "Adresse": "Shenzhen (China)", "Région": "Monde", "Effectif": "5 000+ salariés"},
 
     # Retail / Supermarkets (France & Global)
-    "CARREFOUR": {"Secteur": "Retail", "Nom Officiel": "CARREFOUR SA", "Adresse": "Massy (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
+    "CARREFOUR": {"Secteur": "Retail", "Nom Officiel": "CARREFOUR SA", "Adresse": "Massy (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/652014051"},
     "AUCHAN": {"Secteur": "Retail", "Nom Officiel": "AUCHAN RETAIL", "Adresse": "Croix (France)", "Région": "Hauts-de-France", "Effectif": "10 000+ salariés"},
     "LECLERC": {"Secteur": "Retail", "Nom Officiel": "E.LECLERC", "Adresse": "Ivry-sur-Seine (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "INTERMARCHE": {"Secteur": "Retail", "Nom Officiel": "ITM ENTREPRISES", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
@@ -300,7 +395,7 @@ GLOBAL_OVERRIDES = {
 
     # Fixes from User Feedback
     "DISNEY": {"Secteur": "Communication / Media & Entertainment / Telecom", "Nom Officiel": "THE WALT DISNEY COMPANY", "Adresse": "Burbank, CA (USA)", "Région": "Monde", "Effectif": "10 000+ salariés"},
-    "DECATHLON": {"Secteur": "Retail", "Nom Officiel": "DECATHLON SE", "Adresse": "Villeneuve-d'Ascq (France)", "Région": "Hauts-de-France", "Effectif": "10 000+ salariés"},
+    "DECATHLON": {"Secteur": "Retail", "Nom Officiel": "DECATHLON SE", "Adresse": "Villeneuve-d'Ascq (France)", "Région": "Hauts-de-France", "Effectif": "10 000+ salariés", "Lien": "https://annuaire-entreprises.data.gouv.fr/entreprise/306138900"},
     "LONGCHAMP": {"Secteur": "Luxury", "Nom Officiel": "LONGCHAMP SAS", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "1 000+ salariés"},
     "MONOPRIX": {"Secteur": "Retail", "Nom Officiel": "MONOPRIX", "Adresse": "Clichy (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
     "PERNOD RICARD": {"Secteur": "Food / Beverages", "Nom Officiel": "PERNOD RICARD", "Adresse": "Paris (France)", "Région": "Île-de-France", "Effectif": "10 000+ salariés"},
@@ -340,6 +435,14 @@ NORMALIZED_OVERRIDES["BNB"] = "BNP PARIBAS"
 NORMALIZED_OVERRIDES["BNPPARIBAS"] = "BNP PARIBAS"
 NORMALIZED_OVERRIDES["BNP-PARIBAS"] = "BNP PARIBAS"
 NORMALIZED_OVERRIDES["FREEPRO"] = "FREE"
+NORMALIZED_OVERRIDES["GROUPAGRICA"] = "GROUPE AGRICA"
+NORMALIZED_OVERRIDES["MANOMANO"] = "COLIBRI SAS"
+NORMALIZED_OVERRIDES["COLIBRI"] = "COLIBRI SAS"
+NORMALIZED_OVERRIDES["NATIXIS-CORPORATE-INVESTMENT-BANKING"] = "NATIXIS"
+NORMALIZED_OVERRIDES["SOPRA"] = "SOPRA STERIA"
+NORMALIZED_OVERRIDES["CLUBMED"] = "CLUB MED"
+NORMALIZED_OVERRIDES["CLUB.MED"] = "CLUB MED"
+NORMALIZED_OVERRIDES["CLUB-MED"] = "CLUB MED"
 
 def get_region_from_dept(zip_code):
     if not zip_code or len(zip_code) < 2: return "Autre"
@@ -352,25 +455,66 @@ def get_region_from_dept(zip_code):
 
     return DEPT_TO_REGION.get(dept, f"France ({dept})")
 
+def check_is_competitor(name):
+    """
+    Checks if a company name is a competitor using strict word boundaries.
+    Avoids 'EY' matching inside 'DISNEY' or 'KEYRUS'.
+    """
+    if not name: return False
+    upper_name = name.upper()
+    for comp in COMPETITORS:
+        # \b matches word boundary. escape(comp) handles special chars like &
+        if re.search(r'\b' + re.escape(comp) + r'\b', upper_name):
+            return True
+    return False
+
 # --- Helper Functions ---
 
 def extract_company_from_input(input_str):
     input_str = input_str.strip()
-    company = input_str
+    
+    # Pre-cleaning: Text often comes from Excel copy-paste (Tab delimited)
+    # Strategy: If tab present, look for the most "name-like" part.
+    if "\t" in input_str:
+        parts = input_str.split("\t")
+        # Heuristic: If part 0 is email, take part 1.
+        if "@" in parts[0] and len(parts) > 1:
+             input_str = parts[1]
+        else:
+             input_str = parts[0]
 
-    if "@" in input_str and not input_str.startswith("http"):
+    if "\n" in input_str:
+        input_str = input_str.split("\n")[0]
+        
+    company = input_str.strip()
+
+    # If it's still an email, try to extract domain
+    if "@" in company and not company.startswith("http"):
         try:
-            domain = input_str.split("@")[1]
+            domain = company.split("@")[1]
             if "." in domain:
-                company = domain.split(".")[0]
-                company = domain.split(".")[0]
-                # Smart Filter: Keep Gmail/Outlook ignored, but ALLOW Orange/Free/SFR because they are also big companies to target.
-                # If it's a personal email, let the user decide, but don't block valid corporate emails.
-                if company.lower() in ["gmail", "outlook", "hotmail", "yahoo", "wanadoo", "icloud", "laposte"]:
-                    return input_str, False 
+                candidate = domain.split(".")[0]
+                # Smart Filter: Keep Gmail/Outlook ignored
+                if candidate.lower() not in ["gmail", "outlook", "hotmail", "yahoo", "wanadoo", "icloud", "laposte"]:
+                     company = candidate
         except:
             pass
     
+    # Heuristics for "Copy-Paste" from directories (Pappers, Societe.com, etc.)
+    # Example: "TRANSAVIA a été créée le 1 janvier 1979..." -> "TRANSAVIA"
+    # Example: "BNP PARIBAS est une société anonyme..." -> "BNP PARIBAS"
+    
+    # Regex 1: "X a été créée le"
+    match_creation = re.search(r'^(.+?)\s+a été créée le', company, re.IGNORECASE)
+    if match_creation:
+        company = match_creation.group(1)
+        
+    # Regex 2: "X est une (société|entreprise|association)"
+    if not match_creation:
+        match_est = re.search(r'^(.+?)\s+est une\s+(société|entreprise|association)', company, re.IGNORECASE)
+        if match_est:
+            company = match_est.group(1)
+
     company = company.replace("-", " ").replace(".", " ")
     company = re.sub(r'(group|france|partners|holdings|corp|inc|ltd)$', r' \1', company, flags=re.IGNORECASE)
     
@@ -415,7 +559,7 @@ def analyze_web_content(company_name):
             query = f"{company_name} societe.com France"
             with DDGS() as ddgs:
                  # limit=1
-                 results = list(ddgs.text(company_name, region='fr-fr', max_results=1))
+                 results = list(ddgs.text(query, region='fr-fr', max_results=1))
                  if results:
                       first_res = results[0]
                       source_url = first_res.get('href', '')
@@ -456,8 +600,11 @@ def categorize_company_logic(raw_input):
             return {"Input": raw_input, "Nom Officiel": "Ignoré", "Secteur": "Hors Scope", "Détail": "Email perso / invalide", "Source": "-", "Score": "0", "Adresse": "-", "Région": "-", "Lien": "-"}
 
         # 0. Check User Corrections (Case Insensitive)
+        # Force Reload to ensure multi-process / overlapping writes are caught
+        load_corrections()
+        
         # Key in JSON is UPPERCASE.
-        upper_name_clean = company_name.upper().strip()
+        upper_name_clean = normalize_key(company_name)
         
         custom_sector = USER_CORRECTIONS.get(upper_name_clean)
         forced_sector = None
@@ -471,6 +618,9 @@ def categorize_company_logic(raw_input):
         if upper_name_clean in NORMALIZED_OVERRIDES:
              mapped_key = NORMALIZED_OVERRIDES[upper_name_clean]
              target_override = GLOBAL_OVERRIDES.get(mapped_key)
+             # KEY FIX: If we have a better name (Normalized), use it for API search!
+             # This helps "groupagrica" -> "GROUPE AGRICA" find results even if no hardcoded override exists.
+             company_name = mapped_key # Update for API search
         elif upper_name_clean in GLOBAL_OVERRIDES:
              target_override = GLOBAL_OVERRIDES[upper_name_clean]
         
@@ -492,7 +642,8 @@ def categorize_company_logic(raw_input):
                 "Adresse": target_override["Adresse"],
                 "Région": target_override["Région"],
                 "Effectif": target_override.get("Effectif", "Non renseigné"),
-                "Lien": manual_link
+                "Lien": manual_link,
+                "IsCompetitor": target_override.get("IsCompetitor", check_is_competitor(target_override["Nom Officiel"]))
              }
 
         # 2. Call API
@@ -538,6 +689,14 @@ def categorize_company_logic(raw_input):
                         
                         siren = best_res.get('siren')
                         if siren: link_url = f"https://annuaire-entreprises.data.gouv.fr/entreprise/{siren}"
+                        
+                        # Map Effectif Code to Text
+                        tranche_code = best_res.get('tranche_effectif_salarie')
+                        effectif_text = TRANCHE_EFFECTIFS.get(tranche_code, "Non renseigné")
+                        # If unknown code, keep it raw or default
+                        if not effectif_text and tranche_code: effectif_text = f"Code: {tranche_code}"
+                        best_res['tranche_effectif_salarie'] = effectif_text
+                        
         except Exception as e:
             print(f"API Call Error: {e}")
 
@@ -552,16 +711,29 @@ def categorize_company_logic(raw_input):
             
             if not final_sector: final_sector = "Unknown"
 
+            # Check Competitor (Strict Word Boundary Match)
+            # Check Competitor (Strict Word Boundary Match)
+            # Use the new robust helper function
+            is_competitor = check_is_competitor(official_name)
+            
+            # Additional Check: If forced_sector name matches competitor list
+            if not is_competitor and forced_sector and forced_sector.upper() in COMPETITORS:
+                 # Unlikely case but safety check
+                 pass
+
             return {
                 "Input": raw_input,
                 "Nom Officiel": official_name,
+                "Secteur": final_sector,
                 "Secteur": final_sector,
                 "Détail": "Override + API" if forced_sector else f"Code NAF: {naf_code}",
                 "Source": "Officiel (API)",
                 "Score": "100%",
                 "Adresse": address,
                 "Région": region,
-                "Lien": link_url
+                "Lien": link_url,
+                "IsCompetitor": is_competitor,
+                "Effectif": best_res.get('tranche_effectif_salarie')
             }
             
         # 4. Fallback: Web Search
@@ -576,7 +748,9 @@ def categorize_company_logic(raw_input):
                 "Détail": "Correction Utilisateur (Sans Info)",
                 "Source": "Mémoire",
                 "Score": "100%",
-                "Adresse": "-", "Région": "-", "Lien": "-"
+                "Adresse": "-", "Région": "-", "Lien": "-",
+                "Adresse": "-", "Région": "-", "Lien": "-",
+                "IsCompetitor": check_is_competitor(company_name)
              }
              
         sector_web, source_web, score_web, title_web = analyze_web_content(company_name)
@@ -586,6 +760,7 @@ def categorize_company_logic(raw_input):
              final_link = f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={company_name.replace(' ', '+')}"
 
         if sector_web:
+         if sector_web:
              return {
                 "Input": raw_input,
                 "Nom Officiel": title_web if title_web and len(title_web) < 60 else official_name,
@@ -595,10 +770,29 @@ def categorize_company_logic(raw_input):
                 "Score": f"{score_web}",
                 "Adresse": address if address != "Non renseigné" else "International / Web",
                 "Région": region if region != "Non renseigné" else "Monde",
-                "Lien": final_link
+                "Lien": final_link,
+                "IsCompetitor": check_is_competitor(official_name) or check_is_competitor(company_name)
+             }
+             
+        # 5. Fallback AI (Gemini) - Last Resort
+        print(f"Triggering Gemini for: {company_name}")
+        ai_sector, ai_detail, ai_score = analyze_with_gemini(company_name, list(SECTOR_CONFIG.keys()), CUSTOM_SECTORS)
+        
+        if ai_sector:
+             return {
+                "Input": raw_input,
+                "Nom Officiel": official_name, # Keep best guess official name
+                "Secteur": ai_sector,
+                "Détail": ai_detail,
+                "Source": "Intelligence Artificielle (Gemini)",
+                "Score": "100%",
+                "Adresse": address,
+                "Région": region,
+                "Lien": final_link,
+                "IsCompetitor": check_is_competitor(official_name)
              }
 
-        # 5. Nothing Found
+        # 6. Nothing Found
         return {
             "Input": raw_input,
             "Nom Officiel": official_name,
@@ -726,21 +920,98 @@ def api_batch():
                     results.append(categorize_company_logic(line))
                 except Exception as e:
                     print(f"Batch Error on {line}: {e}")
-                    results.append({
-                        "Input": line,
-                        "Nom Officiel": "Erreur Interne",
-                        "Secteur": "Erreur",
-                        "Détail": f"Crash: {str(e)}",
-                        "Source": "Server Error",
-                        "Score": "0",
-                        "Adresse": "-", "Région": "-", "Effectif": "-", "Lien": "-"
-                    })
-                
+        
         return jsonify({"results": results})
 
     except Exception as e:
-        print(f"API Batch FATAL: {e}")
-        return jsonify({"error": f"Fatal Batch Error: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/export_excel', methods=['POST'])
+def export_excel():
+    try:
+        data = request.json
+        if not data or 'results' not in data:
+            return jsonify({"error": "No data to export"}), 400
+        
+        results = data['results']
+        
+        # Prepare DataFrame
+        export_data = []
+        for row in results:
+            export_data.append({
+                "Input": row.get("Input"),
+                "Nom Officiel": row.get("Nom Officiel"),
+                "Secteur": row.get("Secteur"),
+                "Adresse": row.get("Adresse"),
+                "Région": row.get("Région"),
+                "Effectif": row.get("Effectif"),
+                "Lien": row.get("Lien"),
+                "Score": row.get("Score"),
+                "Détails": row.get("Détail")
+            })
+            
+        df = pd.DataFrame(export_data)
+        
+        # Save to a temporary file (or in memory)
+        # Using a fixed temp file for simplicity in this context, or BytesIO
+        from io import BytesIO
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Resultats')
+            
+            # Auto-adjust columns width estimate and style headers
+            worksheet = writer.sheets['Resultats']
+            from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+            
+            # Styles
+            header_font = Font(bold=True, color="FFFFFF")
+            header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+            thin_border = Border(left=Side(style='thin'), 
+                                 right=Side(style='thin'), 
+                                 top=Side(style='thin'), 
+                                 bottom=Side(style='thin'))
+            
+            # Apply Filter
+            worksheet.auto_filter.ref = worksheet.dimensions
+            
+            # Freeze Top Row
+            worksheet.freeze_panes = 'A2'
+            
+            # Style headers
+            for cell in worksheet[1]:
+                cell.font = header_font
+                cell.fill = header_fill
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = thin_border
+                
+            # Style Body and Adjust Width
+            for idx, col in enumerate(df.columns):
+                # Auto Width
+                max_len = max(
+                    df[col].astype(str).map(len).max(),
+                    len(col)
+                ) + 4 # Little extra padding
+                worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 60)
+                
+                # Apply borders to all cells
+                for cell in worksheet[chr(65 + idx)]:
+                    cell.border = thin_border
+                    if cell.row > 1: # align left for data, center for header (already done)
+                         cell.alignment = Alignment(vertical="center")
+                
+        output.seek(0)
+        
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=f"export_entreprises_{int(time.time())}.xlsx",
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+            
+    except Exception as e:
+        print(f"Export Error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001, host='0.0.0.0')
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=True)

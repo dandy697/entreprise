@@ -83,7 +83,9 @@ async function performSingleSearch() {
 
         const data = await response.json();
         // Add to the table (top)
-        renderTable([data], true); // true = append/prepend mode? Let's just prepend.
+        // Add to the table (top) - PREPEND to keep history
+        currentData = [data, ...currentData];
+        renderTable(currentData);
 
     } catch (e) {
         alert("Erreur de connexion : " + e.message);
@@ -103,7 +105,6 @@ async function processPaste() {
     const lines = text.split('\n')
         .map(l => l.trim())
         .filter(l => l.length > 0)
-        // Filter out navigation artifacts (common copy-paste junk)
         .filter(l => !l.toLowerCase().includes("voir fiche"))
         .filter(l => !l.toLowerCase().includes("page suivante"))
         .filter(l => !l.toLowerCase().includes("page précédente"));
@@ -111,87 +112,117 @@ async function processPaste() {
     if (lines.length === 0) return;
 
     const btn = document.getElementById('proccessPasteBtn');
+    const progressContainer = document.getElementById('progressContainer');
+
+    // UI Reset
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Traitement...';
     btn.disabled = true;
+    progressContainer.style.display = 'block';
 
+    // Clear previous results for new search
+    currentData = [];
+    renderTable(currentData);
+
+    // Init Progress
+    const total = lines.length;
+    let processed = 0;
+    updateProgress(0, total);
+
+    // Sequential Processing (Chunking client-side)
     try {
-        const response = await fetch(`${API_URL}/batch`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ inputs: lines })
-        });
+        for (const line of lines) {
+            try {
+                // Call Single Item Endpoint
+                const response = await fetch(`${API_URL}/categorize`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: line })
+                });
 
-        if (!response.ok) throw new Error(`Server Error: ${response.status}`);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-        const data = await response.json();
-        currentData = data.results;
-        renderTable(currentData);
+                const data = await response.json();
+
+                // Result Logic: Match list order (Append)
+                currentData = [...currentData, ...[data]];
+                renderTable(currentData);
+
+            } catch (innerError) {
+                console.error(`Error processing ${line}:`, innerError);
+            }
+
+            processed++;
+            updateProgress(processed, total);
+        }
 
     } catch (e) {
         console.error(e);
-        alert("Erreur: " + e.message + "\n(Vérifiez que le serveur python tourne bien)");
+        alert("Erreur globale: " + e.message);
     } finally {
         btn.innerHTML = 'Enrichir les données';
         btn.disabled = false;
+
+        setTimeout(() => {
+            // progressContainer.style.display = 'none';
+        }, 3000);
     }
 }
 
-function renderTable(data, prepend = false) {
+function updateProgress(current, total) {
+    const percent = Math.round((current / total) * 100);
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+
+    if (progressBar) progressBar.style.width = `${percent}%`;
+    if (progressText) progressText.innerText = `${current} / ${total}`;
+    if (progressPercent) progressPercent.innerText = `${percent}%`;
+}
+
+function renderTable(data) {
     const tbody = document.getElementById('tableBody');
-    if (!prepend) {
-        tbody.innerHTML = '';
-        currentData = data;
-    } else {
-        currentData = [...data, ...currentData];
-    }
+    currentData = data;
 
     if (currentData.length === 0) {
         document.getElementById('emptyState').style.display = 'block';
+        tbody.innerHTML = '';
+        document.getElementById('countTotal').innerText = 0;
+        document.getElementById('statFound').innerText = 0;
+        document.getElementById('statNotFound').innerText = 0;
+        document.getElementById('statError').innerText = 0;
         return;
     }
     document.getElementById('emptyState').style.display = 'none';
 
-    // Stats counters
     let found = 0, notFound = 0, error = 0;
-
-    // Re-render all from currentData to keep order and stats correct
-    // (A bit inefficient but safe)
     tbody.innerHTML = '';
 
     currentData.forEach(row => {
-        // Stats
         if (row["Secteur"].includes("Erreur") || row["Secteur"] === "Error") error++;
         else if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") notFound++;
         else found++;
 
         const tr = document.createElement('tr');
-        const index = currentData.indexOf(row); // Get index for update
+        const index = currentData.indexOf(row);
 
         let statusIcon = '<i class="fa-solid fa-circle-check status-icon success"></i>';
-
         if (row["Secteur"].includes("Erreur") || row["Secteur"] === "Error") {
             statusIcon = '<i class="fa-solid fa-circle-xmark status-icon error" style="color: var(--error);"></i>';
         } else if (row["Secteur"].includes("Non Trouvé") || row["Secteur"] === "Unknown") {
             statusIcon = '<i class="fa-solid fa-circle-exclamation status-icon warning" style="color: var(--warning);"></i>';
-        } else {
-            statusIcon = '<i class="fa-solid fa-circle-check status-icon success" style="color: var(--success);"></i>';
         }
 
         const sector = row["Secteur"] === "Unknown" ? "Non Trouvé" : row["Secteur"];
         const region = row["Région"] || "Non renseigné";
 
-        // Logic: Hide link for US companies
         let link = row["Lien"] && row["Lien"] !== "#" ? `<a href="${row["Lien"]}" target="_blank" class="link-btn">Voir <i class="fa-solid fa-arrow-up-right-from-square"></i></a>` : "-";
         if (row["Adresse"] && (row["Adresse"].includes("USA") || row["Adresse"].includes("United States"))) {
             link = '<span class="text-muted" title="Lien masqué pour USA">-</span>';
         }
 
-        // Edit Mode Logic
         let sectorDisplay;
         if (row._isEditing) {
-            // Dropdown logic
             const isCustom = typeof CUSTOM_SECTORS !== 'undefined' && CUSTOM_SECTORS.includes(sector);
-
             let sectorSelect = `<div id="sector-container-${index}" class="edit-container" style="width:100%">
                 <select class="sector-select" onchange="if(this.value === 'CUSTOM') { switchToInput(${index}); } else { updateSector(${index}, this.value); }">`;
 
@@ -201,28 +232,28 @@ function renderTable(data, prepend = false) {
                 if (selected) currentInList = true;
                 sectorSelect += `<option value="${s}" ${selected}>${s}</option>`;
             });
+            if (!currentInList) sectorSelect += `<option value="${row["Secteur"]}" selected>${row["Secteur"]}</option>`;
+            sectorSelect += `<option value="CUSTOM" style="font-weight:bold; color:var(--primary-color);">✍️ Autre / Saisie libre...</option></select>`;
 
-            // If currently showing a custom value NOT in list (shouldn't happen if persisted, but safety)
-            if (!currentInList) {
-                sectorSelect += `<option value="${row["Secteur"]}" selected>${row["Secteur"]}</option>`;
-            }
-
-            sectorSelect += `<option value="CUSTOM" style="font-weight:bold; color:var(--primary-color);">✍️ Autre / Saisie libre...</option>`;
-            sectorSelect += `</select>`;
-
-            // Buttons: Delete (if custom) OR Cancel
             if (isCustom) {
                 const safeSector = sector.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                sectorSelect += `<button class="delete-btn" onclick="event.stopPropagation(); deleteCustomSector('${safeSector}')" title="Supprimer ce secteur"><i class="fa-solid fa-trash"></i></button>`;
+                sectorSelect += `<button class="delete-btn" onclick="event.stopPropagation(); deleteCustomSector('${safeSector}')" title="Supprimer"><i class="fa-solid fa-trash"></i></button>`;
             }
-            sectorSelect += `<button class="cancel-btn" onclick="cancelEdit(${index})" title="Annuler"><i class="fa-solid fa-xmark"></i></button>`;
-            sectorSelect += `</div>`;
-
+            sectorSelect += `<button class="cancel-btn" onclick="cancelEdit(${index})" title="Annuler"><i class="fa-solid fa-xmark"></i></button></div>`;
             sectorDisplay = sectorSelect;
-
         } else {
-            // Text + Pencil
-            sectorDisplay = `<div class="industry-wrapper"><span class="industry-badge">${sector}</span> <i class="fa-solid fa-pen edit-icon" onclick="enableEdit(${index})"></i></div>`;
+            let competitorBadge = "";
+            if (row["IsCompetitor"]) {
+                competitorBadge = `<span class="competitor-alert" title="Concurrent Identifié">⚠️ Concurrent</span> `;
+            }
+            // PILL STYLE HERE
+            sectorDisplay = `
+                <div class="row-display" onclick="enableEdit(${index})">
+                    ${competitorBadge}
+                    <span class="sector-pill">${sector}</span>
+                    <i class="fa-solid fa-pen-to-square edit-icon"></i>
+                </div>
+            `;
         }
 
         tr.innerHTML = `
@@ -237,50 +268,49 @@ function renderTable(data, prepend = false) {
         tbody.appendChild(tr);
     });
 
-    // Update Header and Footer Counts
     document.getElementById('countTotal').innerText = currentData.length;
-    // document.getElementById('pluralTotal').innerText = currentData.length > 1 ? 's' : '';
-
     document.getElementById('statFound').innerText = found;
     document.getElementById('statNotFound').innerText = notFound;
     document.getElementById('statError').innerText = error;
 }
 
-function downloadExcel() {
-    // Reusing the CSV logic for simplicity but naming it xls for user happiness
-    // or really do Excel. For now, CSV is safer client side.
+async function downloadExcel() {
     if (currentData.length === 0) return;
 
-    const header = ["Input", "Nom Entreprise", "Industrie", "Adresse", "Région", "Effectif", "Lien", "Score", "Détails"];
-    const rows = [header.join(',')];
+    const btn = document.querySelector('button[onclick="downloadExcel()"]');
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Export...';
+    btn.disabled = true;
 
-    currentData.forEach(row => {
-        const line = [
-            `"${row["Input"]}"`,
-            `"${row["Nom Officiel"]}"`,
-            `"${row["Secteur"]}"`,
-            `"${row["Adresse"]}"`,
-            `"${row["Région"]}"`,
-            `"${row["Effectif"]}"`,
-            `"${row["Lien"]}"`,
-            `"${row["Score"]}"`,
-            `"${row["Détail"]}"`
-        ];
-        rows.push(line.join(','));
-    });
+    try {
+        const response = await fetch(`${API_URL}/export_excel`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ results: currentData })
+        });
 
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `export_entreprises_${Date.now()}.csv`;
-    a.click();
+        if (!response.ok) throw new Error("Erreur export");
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `enrichissement_export_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+    } catch (e) {
+        alert("Erreur lors de l'export Excel: " + e.message);
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
 }
 
 async function updateSector(index, newSector) {
     if (!newSector) return;
 
-    // Optimistic Update
     const companyName = currentData[index]["Input"];
     currentData[index]["Secteur"] = newSector;
     currentData[index]._isEditing = false;
@@ -294,7 +324,6 @@ async function updateSector(index, newSector) {
         });
         const res = await response.json();
 
-        // Update Local Lists if New
         if (res.is_new) {
             if (!ALL_SECTORS.includes(newSector)) ALL_SECTORS.push(newSector);
             if (typeof CUSTOM_SECTORS !== 'undefined' && !CUSTOM_SECTORS.includes(newSector)) CUSTOM_SECTORS.push(newSector);
@@ -303,12 +332,10 @@ async function updateSector(index, newSector) {
 
     } catch (e) {
         console.error("Save failed", e);
-        // Ideally revert UI here
     }
 }
 
 async function deleteCustomSector(sectorName) {
-    // Custom Modal Confirmation
     showConfirm(
         "Suppression",
         `Voulez-vous vraiment supprimer le secteur "${sectorName}" de la liste ?`,
@@ -339,13 +366,11 @@ async function deleteCustomSector(sectorName) {
     );
 }
 
-// --- Custom Modal Logic ---
 function showConfirm(title, message, onConfirm) {
     const modal = document.getElementById('confirmModal');
     document.getElementById('confirmTitle').innerText = title;
     document.getElementById('confirmMessage').innerText = message;
 
-    // Reset Buttons (Clone to remove listeners)
     const oldConfirm = document.getElementById('btnConfirm');
     const newConfirm = oldConfirm.cloneNode(true);
     oldConfirm.parentNode.replaceChild(newConfirm, oldConfirm);
@@ -354,7 +379,6 @@ function showConfirm(title, message, onConfirm) {
     const newCancel = oldCancel.cloneNode(true);
     oldCancel.parentNode.replaceChild(newCancel, oldCancel);
 
-    // Bind
     newConfirm.onclick = () => {
         onConfirm();
         modal.style.display = 'none';
@@ -366,7 +390,6 @@ function showConfirm(title, message, onConfirm) {
     modal.style.display = 'flex';
 }
 
-// Expose to window for inline onclick
 window.deleteCustomSector = deleteCustomSector;
 
 function enableEdit(index) {
