@@ -1,6 +1,11 @@
 from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
-import pandas as pd
+# import pandas as pd # Removed for size optimization
+import csv
+import io
+from openpyxl import load_workbook, Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+
 import requests
 from bs4 import BeautifulSoup
 # from duckduckgo_search import DDGS # Moved to local scope for safety
@@ -32,7 +37,7 @@ if KV_URL:
 app = Flask(__name__, static_folder='static', template_folder='templates')
 CORS(app)
 
-from ai_classifier import analyze_with_gemini
+from ai_classifier import analyze_with_groq
 
 # --- Configuration ---
 CORRECTIONS_FILE = "corrections.json"
@@ -759,8 +764,8 @@ def categorize_company_logic(raw_input):
         if final_link == "-" or not final_link:
              final_link = f"https://annuaire-entreprises.data.gouv.fr/rechercher?q={company_name.replace(' ', '+')}"
 
-        if sector_web:
-         if sector_web:
+        # Fix: Only accept Web Result if it is NOT "Unknown"
+        if sector_web and sector_web != "Unknown":
              return {
                 "Input": raw_input,
                 "Nom Officiel": title_web if title_web and len(title_web) < 60 else official_name,
@@ -774,9 +779,9 @@ def categorize_company_logic(raw_input):
                 "IsCompetitor": check_is_competitor(official_name) or check_is_competitor(company_name)
              }
              
-        # 5. Fallback AI (Gemini) - Last Resort
-        print(f"Triggering Gemini for: {company_name}")
-        ai_sector, ai_detail, ai_score = analyze_with_gemini(company_name, list(SECTOR_CONFIG.keys()), CUSTOM_SECTORS)
+        # 5. Fallback AI (Groq) - Last Resort
+        print(f"Triggering Groq for: {company_name}")
+        ai_sector, ai_detail, ai_score = analyze_with_groq(company_name, list(SECTOR_CONFIG.keys()), CUSTOM_SECTORS)
         
         if ai_sector:
              return {
@@ -784,7 +789,7 @@ def categorize_company_logic(raw_input):
                 "Nom Officiel": official_name, # Keep best guess official name
                 "Secteur": ai_sector,
                 "Détail": ai_detail,
-                "Source": "Intelligence Artificielle (Gemini)",
+                "Source": "Intelligence Artificielle (Groq)",
                 "Score": "100%",
                 "Adresse": address,
                 "Région": region,
@@ -792,15 +797,42 @@ def categorize_company_logic(raw_input):
                 "IsCompetitor": check_is_competitor(official_name)
              }
 
-        # 6. Nothing Found
+        
+        # 6. Degraded Mode: AI Failed, but we had a Web Trace
+        # If we have a URL/Title from Web Search, use it even if sector keywords were not found.
+        # This prevents blocking the user when AI quota is exceeded.
+        if sector_web == "Unknown" and title_web and source_web:
+             detail_msg = "Mode Dégradé (Web)"
+             if 'ai_detail' in locals() and ai_detail:
+                 detail_msg = f"Web (AI HS: {ai_detail})"
+             
+             return {
+                "Input": raw_input,
+                "Nom Officiel": title_web if len(title_web) < 60 else official_name,
+                "Secteur": "À Vérifier / Hors Liste",
+                "Détail": detail_msg,
+                "Source": source_web,
+                "Score": "10% (Web)",
+                "Adresse": address if address != "Non renseigné" else "International / Web",
+                "Région": region if region != "Non renseigné" else "Monde",
+                "Lien": final_link,
+                "IsCompetitor": check_is_competitor(title_web) or check_is_competitor(company_name)
+             }
+
+        # 7. Nothing Found
+        detail_msg = "Aucun résultat probant"
+        if 'ai_detail' in locals() and ai_detail:
+             detail_msg = f"Echec AI: {ai_detail}"
+
         return {
             "Input": raw_input,
             "Nom Officiel": official_name,
             "Secteur": "Non Trouvé",
-            "Détail": "Aucun résultat probant",
-            "Source": "Échec",
+            "Détail": detail_msg,
+            "Source": "-",
             "Score": "0",
-            "Adresse": "-", "Région": "-", "Lien": "-"
+            "Adresse": "-", "Région": "-", "Lien": "-",
+            "IsCompetitor": check_is_competitor(official_name)
         }
 
     except Exception as e:
@@ -878,17 +910,25 @@ def api_upload():
     
     try:
         if filename.endswith('.csv'):
-            df = pd.read_csv(file, header=None)
-            inputs = df.iloc[:, 0].dropna().astype(str).tolist()
+            # Read CSV using standard library
+            stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+            csv_input = csv.reader(stream)
+            for row in csv_input:
+                if row:
+                     inputs.append(str(row[0])) # Take first column
+
         elif filename.endswith(('.xls', '.xlsx')):
-            df = pd.read_excel(file, header=None)
-            inputs = df.iloc[:, 0].dropna().astype(str).tolist()
+            # Read Excel using openpyxl
+            wb = load_workbook(file)
+            ws = wb.active
+            # Iterate rows, take first column
+            for row in ws.iter_rows(values_only=True):
+                if row and row[0]:
+                    inputs.append(str(row[0]))
         else:
              return jsonify({"error": "Format non supporté (CSV ou Excel)"}), 400
              
         # Process the list (same as batch)
-        # We can reuse the batch logic or return the list for the client to call batch?
-        # Let's return the processed results directly to be efficient.
         results = []
         for i, line in enumerate(inputs):
             if line.strip():
@@ -936,69 +976,75 @@ def export_excel():
         results = data['results']
         
         # Prepare DataFrame
-        export_data = []
-        for row in results:
-            export_data.append({
-                "Input": row.get("Input"),
-                "Nom Officiel": row.get("Nom Officiel"),
-                "Secteur": row.get("Secteur"),
-                "Adresse": row.get("Adresse"),
-                "Région": row.get("Région"),
-                "Effectif": row.get("Effectif"),
-                "Lien": row.get("Lien"),
-                "Score": row.get("Score"),
-                "Détails": row.get("Détail")
-            })
-            
-        df = pd.DataFrame(export_data)
+        # Prepare Data for Excel
+        headers = ["Input", "Nom Officiel", "Secteur", "Adresse", "Région", "Effectif", "Lien", "Score", "Détails"]
         
         # Save to a temporary file (or in memory)
-        # Using a fixed temp file for simplicity in this context, or BytesIO
-        from io import BytesIO
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Resultats')
+        output = io.BytesIO()
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Resultats"
+        
+        # Write Header
+        ws.append(headers)
+        
+        # Write Data
+        for row in results:
+            ws.append([
+                row.get("Input"),
+                row.get("Nom Officiel"),
+                row.get("Secteur"),
+                row.get("Adresse"),
+                row.get("Région"),
+                row.get("Effectif"),
+                row.get("Lien"),
+                row.get("Score"),
+                row.get("Détail")
+            ])
             
-            # Auto-adjust columns width estimate and style headers
-            worksheet = writer.sheets['Resultats']
-            from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+        # Styles
+        header_font = Font(bold=True, color="FFFFFF")
+        header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
+        thin_border = Border(left=Side(style='thin'), 
+                                right=Side(style='thin'), 
+                                top=Side(style='thin'), 
+                                bottom=Side(style='thin'))
+        
+        # Apply Filter
+        ws.auto_filter.ref = ws.dimensions
+        
+        # Freeze Top Row
+        ws.freeze_panes = 'A2'
+        
+        # Style headers
+        for cell in ws[1]:
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+            cell.border = thin_border
             
-            # Styles
-            header_font = Font(bold=True, color="FFFFFF")
-            header_fill = PatternFill(start_color="4F81BD", end_color="4F81BD", fill_type="solid")
-            thin_border = Border(left=Side(style='thin'), 
-                                 right=Side(style='thin'), 
-                                 top=Side(style='thin'), 
-                                 bottom=Side(style='thin'))
+        # Style Body and Adjust Width
+        # Calculate max width for each column
+        column_widths = []
+        for row in ws.iter_rows():
+            for i, cell in enumerate(row):
+                if len(column_widths) <= i:
+                    column_widths.append(0)
+                length = len(str(cell.value)) if cell.value else 0
+                if length > column_widths[i]:
+                    column_widths[i] = length
+                    
+        for i, column_width in enumerate(column_widths):
+            ws.column_dimensions[chr(65 + i)].width = min(column_width + 4, 60)
             
-            # Apply Filter
-            worksheet.auto_filter.ref = worksheet.dimensions
-            
-            # Freeze Top Row
-            worksheet.freeze_panes = 'A2'
-            
-            # Style headers
-            for cell in worksheet[1]:
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = Alignment(horizontal="center", vertical="center")
+        # Borders for all cells
+        for row in ws.iter_rows():
+            for cell in row:
                 cell.border = thin_border
-                
-            # Style Body and Adjust Width
-            for idx, col in enumerate(df.columns):
-                # Auto Width
-                max_len = max(
-                    df[col].astype(str).map(len).max(),
-                    len(col)
-                ) + 4 # Little extra padding
-                worksheet.column_dimensions[chr(65 + idx)].width = min(max_len, 60)
-                
-                # Apply borders to all cells
-                for cell in worksheet[chr(65 + idx)]:
-                    cell.border = thin_border
-                    if cell.row > 1: # align left for data, center for header (already done)
-                         cell.alignment = Alignment(vertical="center")
-                
+                if cell.row > 1:
+                     cell.alignment = Alignment(vertical="center")
+
+        wb.save(output)
         output.seek(0)
         
         return send_file(

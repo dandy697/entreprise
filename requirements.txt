@@ -1,11 +1,10 @@
 flask
 flask-cors
-pandas
 requests
 beautifulsoup4
 duckduckgo-search
 openpyxl
 gunicorn
 redis
-google-generativeai
+groq
 python-dotenv
